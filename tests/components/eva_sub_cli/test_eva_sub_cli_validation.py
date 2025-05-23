@@ -5,8 +5,8 @@ from unittest import TestCase
 
 import yaml
 
-from utils.docker_utils import build_from_docker_file, stop_and_remove_container, copy_files_to_container, \
-    start_container, copy_files_from_container
+from utils.docker_utils import stop_and_remove_container, copy_files_to_container, \
+    start_container, copy_files_from_container, verify_image_present, build_service_from_docker_compose
 from utils.test_utils import run_quiet_command
 
 
@@ -23,17 +23,16 @@ class TestEvaSubCliValidation(TestCase):
     metadata_json = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json.json')
     metadata_xlsx = os.path.join(eva_sub_cli_test_run_dir, 'metadata_xlsx.xlsx')
 
-    project_title = 'test_project_title'
-
-    eva_sub_cli_docker_file = os.path.join(root_dir, 'components', 'eva_sub_cli', 'Dockerfile')
+    docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose.yml')
+    eva_sub_cli_service_name = 'eva_sub_cli'
     image_name = 'eva_sub_cli_test'
     container_name = f'{image_name}'
-
     container_submission_dir = '/opt'
 
     def setUp(self):
-        # build docker image of eva_sub_cli for test
-        build_from_docker_file(self.image_name, self.eva_sub_cli_docker_file)
+        # build docker image of eva_sub_cli for test (if not present)
+        if not verify_image_present(self.image_name):
+            build_service_from_docker_compose(self.docker_compose_file, self.eva_sub_cli_service_name)
         # stop container if already running
         stop_and_remove_container(self.container_name)
         # start container
@@ -71,7 +70,7 @@ class TestEvaSubCliValidation(TestCase):
                           )
 
         # Run validation from command line
-        run_quiet_command("run eva_sub_cli validation using command line", validation_cmd)
+        run_quiet_command("run eva_sub_cli native validator with json metadata using command line", validation_cmd)
 
         # copy validation output from docker
         copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir, 'validation_output'),
@@ -86,7 +85,7 @@ class TestEvaSubCliValidation(TestCase):
                           f"--metadata_xlsx {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_xlsx))} "
                           )
         # Run validation from command line
-        run_quiet_command("run eva_sub_cli validation using command line", validation_cmd)
+        run_quiet_command("run eva_sub_cli native validator with xlsx metadata using command line", validation_cmd)
 
         # copy validation output from docker
         copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir, 'validation_output'),
@@ -103,7 +102,7 @@ class TestEvaSubCliValidation(TestCase):
                           f"--reference_fasta {os.path.join(self.container_submission_dir, 'input_passed.fa')} "
                           )
         # Run validation from command line
-        run_quiet_command("run eva_sub_cli validation using command line", validation_cmd)
+        run_quiet_command("run eva_sub_cli native validator with vcf files and reference fasta using command line", validation_cmd)
 
         # copy validation output from docker
         copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir, 'validation_output'),
@@ -119,7 +118,7 @@ class TestEvaSubCliValidation(TestCase):
                           )
 
         # Run validation from command line
-        run_quiet_command("run eva_sub_cli validation using command line", validation_cmd)
+        run_quiet_command("run eva_sub_cli docker validator with json metadata using command line", validation_cmd)
 
         # copy validation output from docker
         copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir, 'validation_output'),
@@ -134,7 +133,7 @@ class TestEvaSubCliValidation(TestCase):
                           f"--metadata_xlsx {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_xlsx))} "
                           )
         # Run validation from command line
-        run_quiet_command("run eva_sub_cli validation using command line", validation_cmd)
+        run_quiet_command("run eva_sub_cli docker validator with xlsx metadata using command line", validation_cmd)
 
         # copy validation output from docker
         copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir, 'validation_output'),
