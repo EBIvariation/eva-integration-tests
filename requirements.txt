@@ -1,3 +1,4 @@
 ebi_eva_common_pyutils > 0.6.11, == 0.*
 pytest
 flake8
+flask

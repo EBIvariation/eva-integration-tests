@@ -1,0 +1,30 @@
+<settings>
+
+    <profiles>
+        <profile>
+            <id>docker</id>
+
+            <properties>
+                <submission-ws.admin-user>eva-submission-ws-admin-user</submission-ws.admin-user>
+                <submission-ws.admin-password>eva-submission-ws-admin-pass</submission-ws.admin-password>
+
+                <eva.evapro.jdbc.url>jdbc:postgresql://postgres_db:5432/metadata_db</eva.evapro.jdbc.url>
+                <eva.evapro.user>metadata_db_user</eva.evapro.user>
+                <eva.evapro.password>metadata_db_pass</eva.evapro.password>
+
+                <webin.userinfo-url>https://wwwdev.ebi.ac.uk/ena/submit/webin/auth/admin/submission-account</webin.userinfo-url>
+
+                <globus.client-id>test-client-id</globus.client-id>
+                <globus.client-secret>test-client-secret</globus.client-secret>
+                <globus.refresh-token>test-refresh-token</globus.refresh-token>
+                <globus.upload-http-domain>http://mock_globus:5000</globus.upload-http-domain>
+                <globus.submission-endpoint-id>test-submission-endpoint-id</globus.submission-endpoint-id>
+                <globus.token-endpoint>http://mock_globus:5000/v2/oauth2/token</globus.token-endpoint>
+                <globus.transfer-base-url>http://mock_globus:5000/v0.10/operation/endpoint</globus.transfer-base-url>
+
+            </properties>
+        </profile>
+
+    </profiles>
+
+</settings>
