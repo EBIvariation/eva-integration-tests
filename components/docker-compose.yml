@@ -7,11 +7,17 @@ services:
       context: ./eva_sub_cli
       dockerfile: Dockerfile
     container_name: eva_sub_cli_test
+    environment:
+      SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
     command: tail -f /dev/null
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - eva-submission-ws
     networks:
       - eva_network
 
-  eva_submission_ws:
+  eva-submission-ws:
     image: eva_submission_ws_test
     build:
       context: ./eva_submission_ws
@@ -23,6 +29,7 @@ services:
     depends_on:
       - postgres_db
       - mock_globus
+      - mailhog
     networks:
       - eva_network
 
@@ -50,6 +57,14 @@ services:
     restart: always
     ports:
       - 5000:5000
+    networks:
+      - eva_network
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
     networks:
       - eva_network
 
