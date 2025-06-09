@@ -22,6 +22,8 @@
                 <globus.token-endpoint>http://mock_globus:5000/v2/oauth2/token</globus.token-endpoint>
                 <globus.transfer-base-url>http://mock_globus:5000/v0.10/operation/endpoint</globus.transfer-base-url>
 
+                <eva.helpdesk-email>blackhole@ethereal.email</eva.helpdesk-email>
+
             </properties>
         </profile>
 

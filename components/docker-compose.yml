@@ -7,11 +7,15 @@ services:
       context: ./eva_sub_cli
       dockerfile: Dockerfile
     container_name: eva_sub_cli_test
+    environment:
+      SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
     command: tail -f /dev/null
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - eva_network
 
-  eva_submission_ws:
+  eva-submission-ws:
     image: eva_submission_ws_test
     build:
       context: ./eva_submission_ws
