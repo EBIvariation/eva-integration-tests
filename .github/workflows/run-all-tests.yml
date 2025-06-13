@@ -35,6 +35,9 @@ jobs:
       run: |
         echo "EMAIL=$WEBIN_TEST_USER_EMAIL"
         echo "PASSWORD=$WEBIN_TEST_USER_PASSWORD"
+      env:
+        WEBIN_TEST_USER_EMAIL: ${{ secrets.WEBIN_TEST_USER_EMAIL }}
+        WEBIN_TEST_USER_PASSWORD: ${{ secrets.WEBIN_TEST_USER_PASSWORD }}
     - name: Test with pytest
       run: |
         PYTHONPATH=. pytest tests
