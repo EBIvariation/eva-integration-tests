@@ -15,7 +15,9 @@ jobs:
     env:
       WEBIN_TEST_USER_EMAIL: ${{ secrets.WEBIN_TEST_USER_EMAIL }}
       WEBIN_TEST_USER_PASSWORD: ${{ secrets.WEBIN_TEST_USER_PASSWORD }}
-
+    run: |
+      echo "WEBIN_TEST_USER_EMAIL=$WEBIN_TEST_USER_EMAIL"
+      echo "WEBIN_TEST_USER_PASSWORD=$WEBIN_TEST_USER_PASSWORD"
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
