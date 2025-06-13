@@ -7,9 +7,11 @@ import requests
 class WebinTestUser:
     webin_test_user_url = "https://wwwdev.ebi.ac.uk/ena/submit/webin/auth/admin/submission-account"
 
-    def __init__(self):
-        self.webin_test_user_email = os.getenv("WEBIN_TEST_USER_EMAIL")
-        self.webin_test_user_password = os.getenv("WEBIN_TEST_USER_PASSWORD")
+    def __init__(self, email=None, password=None):
+        print("Env check:", os.getenv("WEBIN_TEST_USER_EMAIL"))
+        print("Env check:", os.getenv("WEBIN_TEST_USER_PASSWORD"))
+        self.webin_test_user_email = email or os.getenv("WEBIN_TEST_USER_EMAIL")
+        self.webin_test_user_password = password or os.getenv("WEBIN_TEST_USER_PASSWORD")
         self.webin_test_user_account_id = None
 
     def create_webin_test_user(self):
