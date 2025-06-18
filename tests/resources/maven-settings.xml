@@ -1,0 +1,24 @@
+<settings>
+
+    <profiles>
+
+        <profile>
+            <id>docker</id>
+
+            <properties>
+                <eva.evapro.jdbc.url>jdbc:postgresql://localhost:5432/metadata_db</eva.evapro.jdbc.url>
+                <eva.evapro.user>metadata_db_user</eva.evapro.user>
+                <eva.evapro.password>metadata_db_pass</eva.evapro.password>
+
+                <submission-ws.admin-user>eva-submission-ws-admin-user</submission-ws.admin-user>
+                <submission-ws.admin-password>eva-submission-ws-admin-pass</submission-ws.admin-password>
+
+                <eva.helpdesk-email>eva-helpdesk@ebi.ac.uk</eva.helpdesk-email>
+                <mailhog.email-messages>http://localhost:8025/api/v1/messages</mailhog.email-messages>
+            </properties>
+
+        </profile>
+
+    </profiles>
+
+</settings>

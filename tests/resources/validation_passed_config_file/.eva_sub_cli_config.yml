@@ -1,0 +1,4 @@
+metadata_json: /opt/metadata_json.json
+ready_for_submission_to_eva: true
+vcf_files:
+  - /opt/input_passed.vcf

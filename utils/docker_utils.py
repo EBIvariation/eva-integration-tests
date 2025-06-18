@@ -33,6 +33,20 @@ def build_from_docker_file(image_name, docker_file_path, docker_path='docker', i
     )
 
 
+def stop_and_remove_all_containers_in_docker_compose(docker_compose_file, docker_path='docker'):
+    run_quiet_command("stop and remove all containers present in docker compose file",
+                      f"{docker_path} compose -f {docker_compose_file} down",
+                      log_error_stream_to_output=True
+                      )
+
+
+def start_all_containers_in_docker_compose(docker_compose_file, docker_path='docker'):
+    run_quiet_command("start all containers present in docker compose file",
+                      f"{docker_path} compose -f {docker_compose_file} up -d",
+                      log_error_stream_to_output=True
+                      )
+
+
 def start_container(container_name, image_name, image_tag='latest', docker_path='docker'):
     run_quiet_command("Start container",
                       f"{docker_path} run -it -v /var/run/docker.sock:/var/run/docker.sock --rm -d --name {container_name} {image_name}:{image_tag}")
@@ -93,3 +107,9 @@ def copy_files_to_container(container_name, dir_path, file_path, docker_path='do
 def copy_files_from_container(container_name, dir_path, local_dir_path, docker_path='docker'):
     run_quiet_command(f"copy dir from container to local",
                       f"{docker_path} cp {container_name}:{dir_path}/. {local_dir_path}")
+
+
+def read_file_from_container(container_name, file_path, docker_path='docker'):
+    return run_quiet_command("read content of the file from container",
+                             f" {docker_path} exec {container_name} cat {file_path}",
+                             return_process_output=True)
