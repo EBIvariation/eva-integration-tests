@@ -20,7 +20,7 @@ CREATE TABLE eva_submissions.submission_account (
 	primary_email varchar(255) NOT NULL,
 	user_id varchar(255) NOT NULL,
 	CONSTRAINT submission_account_pkey PRIMARY KEY (id),
-	CONSTRAINT ukf45wjy3egh2t823olpyyw00nv UNIQUE (user_id, login_type)
+	CONSTRAINT uk_submission_account_user_id_login_type UNIQUE (user_id, login_type)
 );
 
 ALTER TABLE eva_submissions.submission_account OWNER to metadata_db_user;
@@ -36,7 +36,7 @@ CREATE TABLE eva_submissions.submission_account_secondary_emails (
 ALTER TABLE eva_submissions.submission_account_secondary_emails OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.submission_account_secondary_emails to metadata_db_user;
 
-ALTER TABLE eva_submissions.submission_account_secondary_emails ADD CONSTRAINT fk1p9c635rj347pe6j333cfo6uy FOREIGN KEY (submission_account_id) REFERENCES eva_submissions.submission_account(id);
+ALTER TABLE eva_submissions.submission_account_secondary_emails ADD CONSTRAINT fk_submission_account_secondary_emails_submission_account_id FOREIGN KEY (submission_account_id) REFERENCES eva_submissions.submission_account(id);
 
 
 --- table (submission)
@@ -54,7 +54,7 @@ CREATE TABLE eva_submissions.submission (
 ALTER TABLE eva_submissions.submission OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.submission to metadata_db_user;
 
-ALTER TABLE eva_submissions.submission ADD CONSTRAINT fk386rjv0uvp78ed68e6tjxvmgf FOREIGN KEY (submission_account_id) REFERENCES eva_submissions.submission_account(id);
+ALTER TABLE eva_submissions.submission ADD CONSTRAINT fk_submission_submission_account_id FOREIGN KEY (submission_account_id) REFERENCES eva_submissions.submission_account(id);
 
 
 --- table (submission_details)
@@ -110,4 +110,4 @@ CREATE TABLE eva_submissions.submission_processing_status_aud (
 ALTER TABLE eva_submissions.submission_processing_status_aud OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.submission_processing_status_aud to metadata_db_user;
 
-ALTER TABLE eva_submissions.submission_processing_status_aud ADD CONSTRAINT fkp9tyiohyovxgvmrexi7m6i8lw FOREIGN KEY (rev) REFERENCES eva_submissions.revinfo(rev);
+ALTER TABLE eva_submissions.submission_processing_status_aud ADD CONSTRAINT fk_submission_processing_status_aud_rev FOREIGN KEY (rev) REFERENCES eva_submissions.revinfo(rev);
