@@ -2,9 +2,9 @@ name: Python tests
 
 on:
   push:
-    branches: [ EVA-3826-eva-submission ]
-  pull_request:
     branches: [ master ]
+  pull_request:
+    branches: [ EVA-3826-eva-submission ]
 
 jobs:
   build:
