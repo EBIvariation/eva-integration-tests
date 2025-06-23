@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  eva_submission:
+    image: eva_submission_test
+    build:
+      # context to where the maven file is located
+      context: .
+      dockerfile: eva_submission/Dockerfile
+    container_name: eva_submission_test
+    command: tail -f /dev/null
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - postgres_db
+    networks:
+      - eva_network
+
+  contig-alias:
+    image: contig-alias
+    build:
+      # context to where the maven file is located
+      context: .
+      dockerfile: contig_alias_ws/Dockerfile
+    container_name: contig_alias_ws_test
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres_db
+    networks:
+      - eva_network
+
+  postgres_db:
+    image: postgres_db_test
+    build:
+      context: ./postgres_db
+      dockerfile: Dockerfile
+    container_name: postgres_db_test
+    restart: always
+    environment:
+      - POSTGRES_USER=root_user
+      - POSTGRES_PASSWORD=root_pass
+    ports:
+      - 5432:5432
+    networks:
+      - eva_network
+
+networks:
+  eva_network:
+    name: eva_network
