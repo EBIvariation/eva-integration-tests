@@ -2,7 +2,7 @@ name: Python tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ EVA-3826-eva-submission ]
   pull_request:
     branches: [ master ]
 
