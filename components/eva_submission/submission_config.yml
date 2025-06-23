@@ -1,0 +1,32 @@
+ftp_dir: /opt/ftp/private/
+public_ftp_dir: /opt/ftp/public/
+
+eloads_dir: /opt/submissions/
+
+eloads_lts_dir: ''
+
+eutils_api_key: ''
+
+genome_downloader:
+  output_directory: /opt/reference_sequences
+
+maven:
+  environment: docker
+  settings_file: /root/maven-settings.xml
+
+executable:
+  eva_sub_cli: eva-sub-cli.py
+  sub_cli_env: /root/.bashrc
+  nextflow: /usr/local/bin/nextflow
+  vcf_assembly_checker: /usr/local/bin/vcf_assembly_checker
+  vcf_validator: /usr/local/bin/vcf_validator
+  bgzip: /usr/bin/bgzip
+  bcftools: /usr/bin/bcftools
+  tabix: /usr/bin/tabix
+  md5sum: /usr/bin/md5sum
+  samtools: /usr/bin/samtools
+  genome_downloader: /usr/local/bin/genome_downloader.py
+  bedtools: /usr/bin/bedtools
+  minimap2: /usr/bin/minimap2
+  python:
+    interpreter: python

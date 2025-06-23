@@ -28,8 +28,8 @@ class TestEvaSubCliValidation(TestCase):
     metadata_json = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json.json')
     metadata_xlsx = os.path.join(eva_sub_cli_test_run_dir, 'metadata_xlsx.xlsx')
 
-    docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose.yml')
-    eva_sub_cli_container_name = 'eva_sub_cli_test'
+    docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose-eva-sub-cli.yml')
+    container_name = 'eva_sub_cli_test'
     container_submission_dir = '/opt'
 
     webin_test_user = WebinTestUser()
@@ -57,7 +57,7 @@ class TestEvaSubCliValidation(TestCase):
             json.dump(sub_metadata, open_metadata)
         # create metadata xlsx file
         shutil.copyfile(
-            os.path.join(self.resources_directory, 'EVA_Submission_Docker_Test.xlsx'),
+            os.path.join(self.resources_directory, 'metadata_spreadsheets', 'EVA_Submission_Docker_Test.xlsx'),
             self.metadata_xlsx
         )
 
@@ -74,7 +74,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def test_native_validator_with_json(self):
         validation_cmd = (
-            f"docker exec {self.eva_sub_cli_container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
         )
@@ -83,7 +83,7 @@ class TestEvaSubCliValidation(TestCase):
         run_quiet_command("run eva_sub_cli native validator with json metadata using command line", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.eva_sub_cli_container_name,
+        copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
                                   self.eva_sub_cli_test_run_dir)
         # assert results
@@ -92,7 +92,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def test_native_validator_with_xlsx(self):
         validation_cmd = (
-            f"docker exec {self.eva_sub_cli_container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_xlsx {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_xlsx))} "
         )
@@ -101,7 +101,7 @@ class TestEvaSubCliValidation(TestCase):
                           validation_cmd, log_error_stream_to_output=True)
 
         # copy validation output from docker
-        copy_files_from_container(self.eva_sub_cli_container_name,
+        copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
                                   self.eva_sub_cli_test_run_dir)
         # assert results
@@ -110,7 +110,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def test_native_validator_with_vcf_files(self):
         validation_cmd = (
-            f"docker exec {self.eva_sub_cli_container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
             f"--vcf_files {os.path.join(self.container_submission_dir, 'input_passed.vcf')} "
@@ -121,7 +121,7 @@ class TestEvaSubCliValidation(TestCase):
                           validation_cmd, log_error_stream_to_output=True)
 
         # copy validation output from docker
-        copy_files_from_container(self.eva_sub_cli_container_name,
+        copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
                                   self.eva_sub_cli_test_run_dir)
         # assert results
@@ -130,7 +130,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def test_docker_validator_with_json(self):
         validation_cmd = (
-            f"docker exec {self.eva_sub_cli_container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
         )
@@ -140,7 +140,7 @@ class TestEvaSubCliValidation(TestCase):
                           validation_cmd, log_error_stream_to_output=True)
 
         # copy validation output from docker
-        copy_files_from_container(self.eva_sub_cli_container_name,
+        copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
                                   self.eva_sub_cli_test_run_dir)
         # assert results
@@ -149,7 +149,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def test_docker_validator_with_xlsx(self):
         validation_cmd = (
-            f"docker exec {self.eva_sub_cli_container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_xlsx {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_xlsx))} "
         )
@@ -158,7 +158,7 @@ class TestEvaSubCliValidation(TestCase):
                           validation_cmd, log_error_stream_to_output=True)
 
         # copy validation output from docker
-        copy_files_from_container(self.eva_sub_cli_container_name,
+        copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
                                   self.eva_sub_cli_test_run_dir)
         # assert results
@@ -169,13 +169,13 @@ class TestEvaSubCliValidation(TestCase):
         # copy validation success config file for the test submission
         validation_passed_config_file = os.path.join(self.resources_directory, 'validation_passed_config_file',
                                                      '.eva_sub_cli_config.yml')
-        copy_files_to_container(self.eva_sub_cli_container_name, self.container_submission_dir,
+        copy_files_to_container(self.container_name, self.container_submission_dir,
                                 validation_passed_config_file)
 
         webin_submission_account, webin_user_email, webin_user_password = self.webin_test_user.get_webin_submission_account_details()
 
         validation_cmd = (
-            f"docker exec {self.eva_sub_cli_container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
             f"--username {webin_submission_account} --password {webin_user_password}"
@@ -191,12 +191,12 @@ class TestEvaSubCliValidation(TestCase):
         for directory in [self.vcf_files_dir, self.fasta_files_dir, self.assembly_reports_dir]:
             for file in os.listdir(directory):
                 file_path = os.path.join(directory, file)
-                copy_files_to_container(self.eva_sub_cli_container_name, self.container_submission_dir, file_path)
+                copy_files_to_container(self.container_name, self.container_submission_dir, file_path)
 
         if self.metadata_json:
-            copy_files_to_container(self.eva_sub_cli_container_name, self.container_submission_dir, self.metadata_json)
+            copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
         if self.metadata_xlsx:
-            copy_files_to_container(self.eva_sub_cli_container_name, self.container_submission_dir, self.metadata_xlsx)
+            copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
 
     def get_submission_json_metadata(self):
         return {
@@ -327,7 +327,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def assert_submission_results(self, webin_submission_account, webin_user_email):
         # assert submission config file
-        yaml_content = read_file_from_container(self.eva_sub_cli_container_name,
+        yaml_content = read_file_from_container(self.container_name,
                                                 os.path.join('/opt', '.eva_sub_cli_config.yml'))
         submission_config_file = yaml.safe_load(yaml_content)
         assert submission_config_file['submission_complete'] is True
