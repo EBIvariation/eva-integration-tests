@@ -3,8 +3,8 @@ FROM python:3.10
 ENV vcf_validator_version=0.9.4
 ENV NXF_VER=22.10.6
 
-ARG REPO_URL=https://github.com/tcezard/eva-submission.git
-ARG REPO_REF=EVA3826
+ARG REPO_URL=https://github.com/EBIvariation/eva-submission.git
+ARG REPO_REF=master
 
 WORKDIR /opt
 

@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ EVA-3826-eva-submission ]
+    branches: [ master ]
 
 jobs:
   build:
