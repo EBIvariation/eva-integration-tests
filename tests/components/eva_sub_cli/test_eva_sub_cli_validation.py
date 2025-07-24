@@ -400,7 +400,7 @@ class TestEvaSubCliValidation(TestCase):
         # assert email sent to user on submission upload
         mail_to_user = [email for email in emails
                         if webin_user_email in email['Content']['Headers'].get('To', [])
-                        and 'eva-noreply@ebi.ac.uk' in email['Content']['Headers'].get('From', [])
+                        and 'eva-helpdesk@ebi.ac.uk' in email['Content']['Headers'].get('From', [])
                         and f"EVA Submission Update: UPLOADED SUCCESS" in email['Content']['Headers'].get('Subject', [])
                         and f"Here is the update for your submission: <br /><br />Submission ID: {submission_id}<br />"
                         in email['Content']['Body']
