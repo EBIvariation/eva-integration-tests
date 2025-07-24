@@ -1,7 +1,6 @@
 import os
 import shutil
 
-import yaml
 from ebi_eva_common_pyutils.config import Configuration
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container
@@ -53,8 +52,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
                                   os.path.join(self.container_eload_dir),
                                   self.test_run_dir)
         # assert results
-        self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, 'ELOAD_1','.ELOAD_1_config.yml'))
-
+        self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, 'ELOAD_1', '.ELOAD_1_config.yml'))
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
@@ -62,13 +60,12 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         if self.metadata_xlsx:
             copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
 
-
     def assert_validation_pass_in_config(self, eload_config_yml):
         # Check that the config file exists
         assert os.path.isfile(eload_config_yml)
         config = Configuration(eload_config_yml)
         # Check that each validation does pass
-        for check in ['vcf_check', 'assembly_check', 'metadata_check', 'sample_check']:
+        for check in ['eva_sub_cli']:
             print(check)
             print(config.query('validation'))
             print(config.query('validation', check))
