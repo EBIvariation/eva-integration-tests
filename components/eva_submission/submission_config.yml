@@ -30,3 +30,11 @@ executable:
   minimap2: /usr/bin/minimap2
   python:
     interpreter: python
+
+biosamples:
+  bsd_url: https://wwwdev.ebi.ac.uk/biosamples
+  webin_url: https://wwwdev.ebi.ac.uk/ena/submit/webin/auth/token
+
+ena:
+  submit_url: https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/
+  ftphost: webin.ebi.ac.uk
