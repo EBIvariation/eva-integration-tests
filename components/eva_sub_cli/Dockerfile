@@ -1,7 +1,7 @@
 FROM python:3.10
 
 ENV vcf_validator_version=0.10.0
-ENV NXF_VER=22.10.6
+ENV NXF_VER=23.10.0
 ENV DOCKER_VER=24.0.7
 
 ARG REPO_URL=https://github.com/EBIvariation/eva-sub-cli.git
