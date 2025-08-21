@@ -10,6 +10,9 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9, 3.11]
+    env:
+      EVA_SUBMISSION_WEBIN_USERNAME: ${{ secrets.EVA_SUBMISSION_WEBIN_USERNAME }}
+      EVA_SUBMISSION_WEBIN_PASSWORD: ${{ secrets.EVA_SUBMISSION_WEBIN_PASSWORD }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
