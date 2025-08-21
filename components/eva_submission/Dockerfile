@@ -40,4 +40,4 @@ COPY eva_submission/submission_config.yml /root/.submission_config.yml
 COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_submission/install_repo.sh /opt/
 
-ENTRYPOINT ["./install_repo.sh"]
+CMD ["./install_repo.sh"]

@@ -12,9 +12,14 @@ services:
       GITHUB_REPOSITORY: $GITHUB_REPOSITORY
       GITHUB_REF: $GITHUB_REF
       GITHUB_SHA: $GITHUB_SHA
-    command: tail -f /dev/null
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: prepare_submission.py -h || exit 1
+      interval: 10s
+      timeout: 130s
+      retries: 12
+      start_period: 10s
     depends_on:
       - postgres_db
     networks:

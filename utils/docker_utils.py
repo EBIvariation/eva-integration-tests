@@ -42,7 +42,7 @@ def stop_and_remove_all_containers_in_docker_compose(docker_compose_file, docker
 
 def start_all_containers_in_docker_compose(docker_compose_file, docker_path='docker'):
     run_quiet_command("start all containers present in docker compose file",
-                      f"{docker_path} compose -f {docker_compose_file} up -d",
+                      f"{docker_path} compose -f {docker_compose_file} up -d --wait",
                       log_error_stream_to_output=True
                       )
 
