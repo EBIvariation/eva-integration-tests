@@ -1,4 +1,3 @@
-version: "3.8"
 
 services:
   eva_sub_cli:
@@ -6,12 +5,13 @@ services:
     build:
       context: ./eva_sub_cli
       dockerfile: Dockerfile
+      args:
+        GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+        GITHUB_REF: $GITHUB_REF
+        GITHUB_SHA: $GITHUB_SHA
     container_name: eva_sub_cli_test
     environment:
       SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
-      GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-      GITHUB_REF: $GITHUB_REF
-      GITHUB_SHA: $GITHUB_SHA
     command: tail -f /dev/null
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

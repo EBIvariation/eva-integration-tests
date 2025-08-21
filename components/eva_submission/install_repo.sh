@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Check if the repository has been set from the environment variable
 if [[ -z "$GITHUB_REPOSITORY" ]] ; then GITHUB_REPOSITORY=EBIvariation/eva-submission ; fi
 if [[ -z "$GITHUB_REF" ]] ; then GITHUB_REF=master ; fi
@@ -13,4 +15,3 @@ python -m pip install .
 
 cd ..
 
-tail -f /dev/null

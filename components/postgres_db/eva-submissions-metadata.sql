@@ -111,3 +111,14 @@ ALTER TABLE eva_submissions.submission_processing_status_aud OWNER to metadata_d
 GRANT ALL ON TABLE eva_submissions.submission_processing_status_aud to metadata_db_user;
 
 ALTER TABLE eva_submissions.submission_processing_status_aud ADD CONSTRAINT fk_submission_processing_status_aud_rev FOREIGN KEY (rev) REFERENCES eva_submissions.revinfo(rev);
+
+
+CREATE TABLE eva_submissions.clustered_variant_update (
+        clustered_update_id INTEGER NOT NULL,
+        taxonomy_id INTEGER NOT NULL,
+        assembly_accession VARCHAR NOT NULL,
+        source TEXT NOT NULL,
+        ingestion_time DATETIME,
+        PRIMARY KEY (clustered_update_id)
+)
+CREATE INDEX eva_submissions.clustered_variant_update_idx ON eva_submissions.clustered_variant_update (project_accession);

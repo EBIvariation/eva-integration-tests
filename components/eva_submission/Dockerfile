@@ -1,11 +1,14 @@
 FROM python:3.10
 
+ARG GITHUB_REPOSITORY
+ARG GITHUB_REF
+ARG GITHUB_SHA
+
 ENV vcf_validator_version=0.9.4
 ENV NXF_VER=23.10.0
 
 
 WORKDIR /opt
-
 
 # install utility libs
 RUN apt update  \
@@ -40,4 +43,12 @@ COPY eva_submission/submission_config.yml /root/.submission_config.yml
 COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_submission/install_repo.sh /opt/
 
-CMD ["./install_repo.sh"]
+
+ENV GITHUB_REPOSITORY $GITHUB_REPOSITORY
+ENV GITHUB_REF $GITHUB_REF
+ENV GITHUB_SHA $GITHUB_SHA
+
+# Run the installation of the repository
+RUN ./install_repo.sh
+
+CMD tail -f /dev/null

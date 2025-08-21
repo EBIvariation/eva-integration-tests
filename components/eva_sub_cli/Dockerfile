@@ -1,5 +1,9 @@
 FROM python:3.10
 
+ARG GITHUB_REPOSITORY
+ARG GITHUB_REF
+ARG GITHUB_SHA
+
 ENV vcf_validator_version=0.10.0
 ENV NXF_VER=23.10.0
 ENV DOCKER_VER=24.0.7
@@ -29,3 +33,14 @@ RUN curl -L "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VE
 RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VER}.tgz | tar xzv \
     && mv docker/* /usr/local/bin/ \
     && chmod +x /usr/local/bin/docker
+
+COPY install_repo.sh /opt/
+
+ENV GITHUB_REPOSITORY $GITHUB_REPOSITORY
+ENV GITHUB_REF $GITHUB_REF
+ENV GITHUB_SHA $GITHUB_SHA
+
+# Run the installation of the repository
+RUN ./install_repo.sh
+
+CMD tail -f /dev/null
