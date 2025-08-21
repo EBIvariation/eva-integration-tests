@@ -4,8 +4,6 @@ ENV vcf_validator_version=0.10.0
 ENV NXF_VER=23.10.0
 ENV DOCKER_VER=24.0.7
 
-ARG REPO_URL=https://github.com/EBIvariation/eva-sub-cli.git
-ARG REPO_REF=main
 
 WORKDIR /opt
 
@@ -31,7 +29,3 @@ RUN curl -L "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VE
 RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VER}.tgz | tar xzv \
     && mv docker/* /usr/local/bin/ \
     && chmod +x /usr/local/bin/docker
-
-RUN git clone ${REPO_URL} eva-sub-cli && cd eva-sub-cli && git checkout ${REPO_REF}
-
-RUN cd eva-sub-cli && python -m pip install .
