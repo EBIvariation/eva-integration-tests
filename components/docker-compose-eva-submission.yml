@@ -1,4 +1,3 @@
-version: "3.8"
 
 services:
   eva_submission:
@@ -7,8 +6,11 @@ services:
       # context to where the maven file is located
       context: .
       dockerfile: eva_submission/Dockerfile
+      args:
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
     container_name: eva_submission_test
-    command: tail -f /dev/null
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
