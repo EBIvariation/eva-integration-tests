@@ -31,11 +31,11 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        echo $GITHUB_REPOSITORY
-        echo $GITHUB_REF
-        echo $GITHUB_SHA
+        echo $SOURCE_GITHUB_REPOSITORY
+        echo $SOURCE_GITHUB_REF
+        echo $SOURCE_GITHUB_SHA
         PYTHONPATH=. pytest tests/components/eva_sub_cli
       env:
-        GITHUB_REPOSITORY: ${{ github.event.client_payload.repository }}
-        GITHUB_REF: ${{ github.event.client_payload.ref }}
-        GITHUB_SHA: ${{ github.event.client_payload.sha }}
+        SOURCE_GITHUB_REPOSITORY: ${{ github.event.client_payload.repository }}
+        SOURCE_GITHUB_REF: ${{ github.event.client_payload.ref }}
+        SOURCE_GITHUB_SHA: ${{ github.event.client_payload.sha }}
