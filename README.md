@@ -31,4 +31,4 @@ PYTHONPATH=. pytest tests/components/eva_submission/test_eva_submission_validati
 docker image rm eva_submission_test
 ```
 
-**NOTE2: Running on a different branch can only be done on one component at a time since the other components will rely on different repositories
+**NOTE2: Running on a different branch can only be done on one component at a time since the other components will rely on different repositories**
