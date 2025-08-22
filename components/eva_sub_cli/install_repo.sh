@@ -7,6 +7,8 @@ if [[ -z "$GITHUB_REPOSITORY" ]] ; then GITHUB_REPOSITORY=EBIvariation/eva-sub-c
 if [[ -z "$GITHUB_REF" ]] ; then GITHUB_REF=main ; fi
 if [[ -n "$GITHUB_SHA" ]] ; then GITHUB_REF=$GITHUB_SHA ; fi
 
+echo "Clone https://github.com/${GITHUB_REPOSITORY}.git"
+
 git clone https://github.com/${GITHUB_REPOSITORY}.git eva-sub-cli
 cd eva-sub-cli
 git checkout ${GITHUB_REF}

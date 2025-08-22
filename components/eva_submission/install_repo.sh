@@ -7,6 +7,8 @@ if [[ -z "$GITHUB_REPOSITORY" ]] ; then GITHUB_REPOSITORY=EBIvariation/eva-submi
 if [[ -z "$GITHUB_REF" ]] ; then GITHUB_REF=master ; fi
 if [[ -n "$GITHUB_SHA" ]] ; then GITHUB_REF=$GITHUB_SHA ; fi
 
+echo "Clone https://github.com/${GITHUB_REPOSITORY}.git"
+
 git clone https://github.com/${GITHUB_REPOSITORY}.git eva-submission
 cd eva-submission
 git checkout ${GITHUB_REF}
