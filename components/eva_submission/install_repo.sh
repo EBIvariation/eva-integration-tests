@@ -7,11 +7,11 @@ if [[ -z "$SOURCE_GITHUB_REPOSITORY" ]] ; then SOURCE_GITHUB_REPOSITORY=EBIvaria
 if [[ -z "$SOURCE_GITHUB_REF" ]] ; then SOURCE_GITHUB_REF=master ; fi
 if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; fi
 
-echo "Clone https://github.com/${GITHUB_REPOSITORY}.git"
+echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
-git clone https://github.com/${GITHUB_REPOSITORY}.git eva-submission
+git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-submission
 cd eva-submission
-git checkout ${GITHUB_REF}
+git checkout ${SOURCE_GITHUB_REF}
 
 python -m pip install .
 

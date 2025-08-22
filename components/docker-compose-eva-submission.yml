@@ -7,9 +7,9 @@ services:
       context: .
       dockerfile: eva_submission/Dockerfile
       args:
-        GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-        GITHUB_REF: $GITHUB_REF
-        GITHUB_SHA: $GITHUB_SHA
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
     container_name: eva_submission_test
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

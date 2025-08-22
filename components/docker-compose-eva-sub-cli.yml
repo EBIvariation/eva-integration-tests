@@ -6,9 +6,9 @@ services:
       context: ./eva_sub_cli
       dockerfile: Dockerfile
       args:
-        GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-        GITHUB_REF: $GITHUB_REF
-        GITHUB_SHA: $GITHUB_SHA
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
     container_name: eva_sub_cli_test
     environment:
       SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
