@@ -24,6 +24,13 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
     container_eload_dir = '/opt/submissions'
 
+    @classmethod
+    def setUpClass(cls):
+        # TODO: Remove before merge
+        os.environ['SOURCE_GITHUB_REPOSITORY'] = 'tcezard/eva-submission'
+        os.environ['SOURCE_GITHUB_REF'] = 'fix/cli-integration'
+        super().setUpClass()
+
     def setUp(self):
         self.webin_username = os.environ.get('EVA_SUBMISSION_WEBIN_USERNAME')
         self.webin_password = os.environ.get('EVA_SUBMISSION_WEBIN_PASSWORD')
