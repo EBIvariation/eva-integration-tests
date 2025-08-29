@@ -36,5 +36,6 @@ biosamples:
   webin_url: https://wwwdev.ebi.ac.uk/ena/submit/webin/auth/token
 
 ena:
-  submit_url: https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/
+  submit_url: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit
+  submit_async: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/queue
   ftphost: webin.ebi.ac.uk
