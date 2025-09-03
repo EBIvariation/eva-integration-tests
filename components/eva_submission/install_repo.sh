@@ -15,10 +15,6 @@ git checkout ${SOURCE_GITHUB_REF}
 
 python -m pip install .
 
-# TODO: Remove before merge
-# Install latest from master waiting for 0.4.13 to be released
-pip install git+https://github.com/EBIvariation/eva-sub-cli.git
-
 
 cd ..
 
