@@ -26,7 +26,6 @@ class TestWithDockerCompose(TestCase):
         # build and setup images/containers present in the docker compose file
         build_from_docker_compose(cls.docker_compose_file)
 
-
     def setUp(self):
         # stop and remove containers
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)

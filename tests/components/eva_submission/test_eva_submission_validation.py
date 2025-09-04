@@ -23,6 +23,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
     container_eload_dir = '/opt/submissions'
 
+
     def setUp(self):
         super().setUp()
         # create metadata xlsx file
@@ -68,7 +69,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         assert os.path.isfile(eload_config_yml)
         config = Configuration(eload_config_yml)
         # Check that each validation does pass
-        for check in ['vcf_check', 'assembly_check', 'metadata_check', 'sample_check']:
+        for check in ['eva_sub_cli']:
             print(check)
             print(config.query('validation'))
             print(config.query('validation', check))
