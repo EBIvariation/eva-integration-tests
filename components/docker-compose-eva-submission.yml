@@ -14,7 +14,25 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
+      eva-submission-ws:
+        condition: service_started
+    networks:
+      - eva_network
+
+  eva-submission-ws:
+    image: eva_submission_ws_test
+    build:
+      context: ./eva_submission_ws
+      dockerfile: Dockerfile
+    container_name: eva_submission_ws_test
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres_db:
+        condition: service_healthy
     networks:
       - eva_network
 
@@ -27,9 +45,10 @@ services:
     container_name: contig_alias_ws_test
     restart: always
     ports:
-      - 8080:8080
+      - 8081:8080
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
     networks:
       - eva_network
 
@@ -47,6 +66,11 @@ services:
       - 5432:5432
     networks:
       - eva_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root_user" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   eva_network:
