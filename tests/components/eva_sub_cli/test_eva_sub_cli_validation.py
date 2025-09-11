@@ -37,6 +37,10 @@ class TestEvaSubCliValidation(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # TODO: Remove before merge
+        os.environ['SOURCE_GITHUB_REPOSITORY'] = 'apriltuesday/eva-sub-cli'
+        os.environ['SOURCE_GITHUB_REF'] = 'EVA-3853'
+
         super().setUpClass()
         # build and setup images/containers present in the docker compose file
         build_from_docker_compose(cls.docker_compose_file)
@@ -132,6 +136,25 @@ class TestEvaSubCliValidation(TestCase):
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
                                        'Validation passed successfully.', self.get_expected_semantic_val())
+
+    def test_native_validator_with_tasks(self):
+        validation_cmd = (
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
+            f"--validation_tasks metadata_check sample_check "
+            f"--submission_dir {self.container_submission_dir} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
+        )
+
+        # Run validation from command line
+        run_quiet_command("run eva_sub_cli native validator with json metadata using command line", validation_cmd)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_submission_dir, 'validation_output'),
+                                  self.eva_sub_cli_test_run_dir)
+        # assert results
+        self.assert_partial_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
+                                               'Validation passed successfully.', self.get_expected_semantic_val())
 
     def test_docker_validator_with_json(self):
         validation_cmd = (
@@ -354,6 +377,45 @@ class TestEvaSubCliValidation(TestCase):
             assembly_check_logs = assembly_check_log_file.readlines()
             self.assertEqual('[info] Number of matches: 247/247\n', assembly_check_logs[4])
             self.assertEqual('[info] Percentage of matches: 100%\n', assembly_check_logs[5])
+
+        # Assert Samples concordance
+        self.assert_sample_checker(os.path.join(validation_output_dir, 'other_validations', 'sample_checker.yml'),
+                                   expected_sample_checker)
+
+        with open(os.path.join(validation_output_dir, 'other_validations', 'file_info.txt')) as open_file:
+            file_info_lines = [line.strip() for line in open_file.readlines()]
+            assert len(file_info_lines) == len(expected_metadata_files_json)
+
+            for actual_line, expected_line in zip(file_info_lines, expected_metadata_files_json):
+                assert actual_line == expected_line
+
+        # Check metadata errors
+        with open(os.path.join(validation_output_dir, 'other_validations', 'metadata_validation.txt')) as open_file:
+            metadata_val_lines = {l.strip() for l in open_file.readlines()}
+            assert any((expected_metadata_val in line for line in metadata_val_lines))
+
+        # Check semantic metadata errors
+        semantic_yaml_file = os.path.join(validation_output_dir, 'other_validations', 'metadata_semantic_check.yml')
+        self.assertTrue(os.path.isfile(semantic_yaml_file))
+        with open(semantic_yaml_file) as open_yaml:
+            semantic_output = yaml.safe_load(open_yaml)
+            assert semantic_output[0] == expected_semantic_val
+
+    def assert_partial_validation_results(self, expected_sample_checker, expected_metadata_files_json,
+                                  expected_metadata_val, expected_semantic_val):
+        validation_output_dir = self.eva_sub_cli_test_run_dir
+
+        # VCF check wasn't run
+        vcf_format_dir = os.path.join(validation_output_dir, 'vcf_format')
+        self.assertFalse(os.path.exists(vcf_format_dir))
+        vcf_format_log_file = os.path.join(vcf_format_dir, 'input_passed.vcf.vcf_format.log')
+        self.assertFalse(os.path.exists(vcf_format_log_file))
+
+        # Assembly check wasn't run
+        assembly_check_dir = os.path.join(validation_output_dir, 'assembly_check')
+        self.assertFalse(os.path.exists(assembly_check_dir))
+        assembly_check_log_file = os.path.join(assembly_check_dir, 'input_passed.vcf.assembly_check.log')
+        self.assertFalse(os.path.exists(assembly_check_log_file))
 
         # Assert Samples concordance
         self.assert_sample_checker(os.path.join(validation_output_dir, 'other_validations', 'sample_checker.yml'),
