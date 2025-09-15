@@ -39,3 +39,9 @@ ena:
   submit_url: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit
   submit_async: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/queue
   ftphost: webin.ebi.ac.uk
+
+submissions:
+  webservice:
+    url: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1
+    admin_username: eva-submission-ws-admin-user
+    admin_password: eva-submission-ws-admin-pass
