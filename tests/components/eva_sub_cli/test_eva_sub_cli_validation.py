@@ -38,7 +38,8 @@ class TestEvaSubCliValidation(TestCase):
     @classmethod
     def setUpClass(cls):
         # TODO: Remove before merge
-        os.environ['SOURCE_GITHUB_REF'] = 'add-validation-tasks'
+        os.environ['SOURCE_GITHUB_REPOSITORY'] = 'apriltuesday/eva-sub-cli'
+        os.environ['SOURCE_GITHUB_REF'] = 'EVA-3950'
 
         super().setUpClass()
         # build and setup images/containers present in the docker compose file

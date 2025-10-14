@@ -34,7 +34,8 @@ RUN curl -L "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VE
 
 
 # Install eva-sub-cli
-RUN git clone https://github.com/EBIvariation/eva-sub-cli.git
+# TODO revert before merge
+RUN git clone https://github.com/apriltuesday/eva-sub-cli.git eva-sub-cli && cd eva-sub-cli && git checkout EVA-3950 && python -m pip install . && cd ..
 
 RUN mkdir -p /opt/ftp/private/eva-box-01/upload/username
 
