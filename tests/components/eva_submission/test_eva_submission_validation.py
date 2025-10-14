@@ -10,7 +10,6 @@ from utils.test_with_docker_compose import TestWithDockerCompose
 
 
 class TestEvaSubmissionValidation(TestWithDockerCompose):
-
     vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
     fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
     assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
@@ -18,12 +17,20 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
     test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
     metadata_xlsx = os.path.join(test_run_dir, 'metadata_xlsx.xlsx')
 
-    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'docker-compose-eva-submission.yml')
+    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
+                                       'docker-compose-eva-submission.yml')
     container_name = 'eva_submission_test'
     container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
     container_eload_dir = '/opt/submissions'
 
+    @classmethod
+    def setUpClass(cls):
+        # TODO: Remove before merge
+        os.environ['SOURCE_GITHUB_REPOSITORY'] = 'apriltuesday/eva-sub-cli'
+        os.environ['SOURCE_GITHUB_REF'] = 'EVA-3950'
+
+        super().setUpClass()
 
     def setUp(self):
         super().setUp()
@@ -62,7 +69,6 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
 
-
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
         copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
@@ -75,7 +81,6 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         copy_files_to_container(self.container_name, self.container_reference_genome_dir,
                                 os.path.join(self.fasta_files_dir, 'GCA_000002945.2.fa'))
 
-
     def assert_validation_pass_in_config(self, eload_config_yml):
         # Check that the config file exists
         assert os.path.isfile(eload_config_yml)
@@ -86,7 +91,8 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
             print(config.query('validation'))
             print(config.query('validation', check))
             print(config.query('validation', check, 'pass'))
-            assert config.query('validation', check, 'pass'), f'{check} is not present or valid in the configuration file'
+            assert config.query('validation', check,
+                                'pass'), f'{check} is not present or valid in the configuration file'
 
     def assert_directory_structure(self, eload_folder):
         # Check that the eva-sub-cli output file have been copied to the 13_validation folder
@@ -96,8 +102,6 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         assert os.path.isfile(result_yaml)
         with open(result_yaml) as open_file:
             cli_results = yaml.safe_load(open_file)
-        report_path = cli_results['assembly_check']['vcf_file_ASM294v2.vcf']['report_path'].replace(self.container_eload_dir, self.test_run_dir)
+        report_path = cli_results['assembly_check']['vcf_file_ASM294v2.vcf']['report_path'].replace(
+            self.container_eload_dir, self.test_run_dir)
         assert os.path.isfile(report_path)
-
-
-
