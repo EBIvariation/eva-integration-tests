@@ -253,7 +253,7 @@ class TestEvaSubCliValidation(TestCase):
 
     def get_submission_json_metadata_existing_project(self):
         json_metadata = self.get_submission_json_metadata()
-        json_metadata['project'] = {'projectAccession': 'PRJEB12345'}
+        json_metadata['project'] = {'projectAccession': 'PRJEB12770'}
         return json_metadata
 
     def get_submission_json_metadata(self):
