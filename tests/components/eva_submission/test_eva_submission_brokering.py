@@ -10,7 +10,7 @@ from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import TestWithDockerCompose
 
 
-class TestEvaSubmissionValidation(TestWithDockerCompose):
+class TestEvaSubmissionBrokering(TestWithDockerCompose):
 
     vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
     fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
