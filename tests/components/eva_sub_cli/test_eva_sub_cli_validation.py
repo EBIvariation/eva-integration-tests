@@ -26,6 +26,7 @@ class TestEvaSubCliValidation(TestCase):
 
     eva_sub_cli_test_run_dir = os.path.join(tests_directory, 'eva_sub_cli_test_run')
     metadata_json = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json.json')
+    metadata_json_existing_project = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json_existing_project.json')
     metadata_xlsx = os.path.join(eva_sub_cli_test_run_dir, 'metadata_xlsx.xlsx')
 
     docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose-eva-sub-cli.yml')
@@ -55,6 +56,10 @@ class TestEvaSubCliValidation(TestCase):
         sub_metadata = self.get_submission_json_metadata()
         with open(self.metadata_json, 'w') as open_metadata:
             json.dump(sub_metadata, open_metadata)
+        # create metadata json file with existing project
+        sub_metadata_existing_project = self.get_submission_json_metadata_existing_project()
+        with open(self.metadata_json_existing_project, 'w') as open_metadata_existing_project:
+            json.dump(sub_metadata_existing_project, open_metadata_existing_project)
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_spreadsheets', 'EVA_Submission_Docker_Test.xlsx'),
@@ -148,16 +153,10 @@ class TestEvaSubCliValidation(TestCase):
                                        'Validation passed successfully.', self.get_expected_semantic_val())
 
     def test_docker_validator_with_json_existing_project(self):
-        # create metadata json file with existing project and copy to container
-        sub_metadata = self.get_submission_json_metadata_existing_project()
-        with open(self.metadata_json, 'w') as open_metadata:
-            json.dump(sub_metadata, open_metadata)
-        copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
-
         validation_cmd = (
             f"docker exec {self.container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
             f"--submission_dir {self.container_submission_dir} "
-            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json_existing_project))} "
         )
 
         # Run validation from command line
@@ -213,12 +212,6 @@ class TestEvaSubCliValidation(TestCase):
         self.assert_submission_results(webin_submission_account, webin_user_email)
 
     def test_eva_sub_cli_submission_existing_project(self):
-        # create metadata json file with existing project and copy to container
-        sub_metadata = self.get_submission_json_metadata_existing_project()
-        with open(self.metadata_json, 'w') as open_metadata:
-            json.dump(sub_metadata, open_metadata)
-        copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
-
         # copy validation success config file for the test submission
         validation_passed_config_file = os.path.join(self.resources_directory, 'validation_passed_config_file',
                                                      '.eva_sub_cli_config.yml')
@@ -230,7 +223,7 @@ class TestEvaSubCliValidation(TestCase):
         validation_cmd = (
             f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
             f"--submission_dir {self.container_submission_dir} "
-            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json_existing_project))} "
             f"--username {webin_submission_account} --password {webin_user_password}"
         )
         # Run validation from command line
@@ -248,6 +241,8 @@ class TestEvaSubCliValidation(TestCase):
 
         if self.metadata_json:
             copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
+        if self.metadata_json_existing_project:
+            copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json_existing_project)
         if self.metadata_xlsx:
             copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
 
