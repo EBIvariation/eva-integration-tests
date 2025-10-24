@@ -9,7 +9,7 @@ from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import TestWithDockerCompose
 
 
-class TestEvaSubmissionValidation(TestWithDockerCompose):
+class TestEvaSubmissionPreparation(TestWithDockerCompose):
     settings_file = os.path.join(TestWithDockerCompose.resources_directory, 'maven-settings.xml')
     test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
 

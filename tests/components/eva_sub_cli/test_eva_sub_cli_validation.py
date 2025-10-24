@@ -26,6 +26,7 @@ class TestEvaSubCliValidation(TestCase):
 
     eva_sub_cli_test_run_dir = os.path.join(tests_directory, 'eva_sub_cli_test_run')
     metadata_json = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json.json')
+    metadata_json_existing_project = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json_existing_project.json')
     metadata_xlsx = os.path.join(eva_sub_cli_test_run_dir, 'metadata_xlsx.xlsx')
 
     docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose-eva-sub-cli.yml')
@@ -55,6 +56,10 @@ class TestEvaSubCliValidation(TestCase):
         sub_metadata = self.get_submission_json_metadata()
         with open(self.metadata_json, 'w') as open_metadata:
             json.dump(sub_metadata, open_metadata)
+        # create metadata json file with existing project
+        sub_metadata_existing_project = self.get_submission_json_metadata_existing_project()
+        with open(self.metadata_json_existing_project, 'w') as open_metadata_existing_project:
+            json.dump(sub_metadata_existing_project, open_metadata_existing_project)
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_spreadsheets', 'EVA_Submission_Docker_Test.xlsx'),
@@ -147,6 +152,25 @@ class TestEvaSubCliValidation(TestCase):
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val())
 
+    def test_docker_validator_with_json_existing_project(self):
+        validation_cmd = (
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
+            f"--submission_dir {self.container_submission_dir} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json_existing_project))} "
+        )
+
+        # Run validation from command line
+        run_quiet_command("run eva_sub_cli docker validator with json metadata using command line",
+                          validation_cmd, log_error_stream_to_output=True)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_submission_dir, 'validation_output'),
+                                  self.eva_sub_cli_test_run_dir)
+        # assert results
+        self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
+                                       'Validation passed successfully.', self.get_expected_semantic_val())
+
     def test_docker_validator_with_xlsx(self):
         validation_cmd = (
             f"docker exec {self.container_name} eva-sub-cli.py --executor=DOCKER --tasks=VALIDATE "
@@ -187,6 +211,28 @@ class TestEvaSubCliValidation(TestCase):
         # assert submission result
         self.assert_submission_results(webin_submission_account, webin_user_email)
 
+    def test_eva_sub_cli_submission_existing_project(self):
+        # copy validation success config file for the test submission
+        validation_passed_config_file = os.path.join(self.resources_directory, 'validation_passed_config_file',
+                                                     '.eva_sub_cli_config.yml')
+        copy_files_to_container(self.container_name, self.container_submission_dir,
+                                validation_passed_config_file)
+
+        webin_submission_account, webin_user_email, webin_user_password = self.webin_test_user.get_webin_submission_account_details()
+
+        validation_cmd = (
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
+            f"--submission_dir {self.container_submission_dir} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json_existing_project))} "
+            f"--username {webin_submission_account} --password {webin_user_password}"
+        )
+        # Run validation from command line
+        run_quiet_command("submit through eva-sub-cli", validation_cmd,
+                          log_error_stream_to_output=True)
+
+        # assert submission result
+        self.assert_submission_results(webin_submission_account, webin_user_email, existing_project=True)
+
     def create_submission_dir_and_copy_files_to_container(self):
         for directory in [self.vcf_files_dir, self.fasta_files_dir, self.assembly_reports_dir]:
             for file in os.listdir(directory):
@@ -195,8 +241,15 @@ class TestEvaSubCliValidation(TestCase):
 
         if self.metadata_json:
             copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
+        if self.metadata_json_existing_project:
+            copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json_existing_project)
         if self.metadata_xlsx:
             copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
+
+    def get_submission_json_metadata_existing_project(self):
+        json_metadata = self.get_submission_json_metadata()
+        json_metadata['project'] = {'projectAccession': 'PRJEB12770'}
+        return json_metadata
 
     def get_submission_json_metadata(self):
         return {
@@ -325,7 +378,7 @@ class TestEvaSubCliValidation(TestCase):
             semantic_output = yaml.safe_load(open_yaml)
             assert semantic_output[0] == expected_semantic_val
 
-    def assert_submission_results(self, webin_submission_account, webin_user_email):
+    def assert_submission_results(self, webin_submission_account, webin_user_email, existing_project=False):
         # assert submission config file
         yaml_content = read_file_from_container(self.container_name,
                                                 os.path.join('/opt', '.eva_sub_cli_config.yml'))
@@ -368,19 +421,30 @@ class TestEvaSubCliValidation(TestCase):
             f'http://localhost:8080/eva/webservices/submission-ws/v1/admin/submission/{submission_id}',
             auth=(profile_properties['submission-ws.admin-user'], profile_properties['submission-ws.admin-password']))
         response_data = response.json()
-        assert response_data['submissionId'] == submission_id
-        assert response_data['projectTitle'] == 'test_project_title'
-        assert response_data['projectDescription'] == 'test_project_description'
-        assert response_data['metadataJson']['project'] == {'centre': 'test_project_centre',
-                                                            'description': 'test_project_description', 'taxId': 1234,
-                                                            'title': 'test_project_title'}
-        assert response_data['metadataJson']['files'][0] == {'analysisAlias': 'AA', 'fileName': 'input_passed.vcf',
-                                                             'fileSize': 45050, 'fileType': 'vcf'}
-        assert response_data['metadataJson']['submitterDetails'][0] == {'centre': 'test_user_centre',
-                                                                        'email': 'test_user_email@abc.com',
-                                                                        'firstName': 'test_user_first_name',
-                                                                        'laboratory': 'test_user_laboratory',
-                                                                        'lastName': 'test_user_last_name'}
+        if existing_project:
+            assert response_data['submissionId'] == submission_id
+            assert response_data['metadataJson']['files'][0] == {'analysisAlias': 'AA', 'fileName': 'input_passed.vcf',
+                                                                 'fileSize': 45050, 'fileType': 'vcf'}
+            assert response_data['metadataJson']['submitterDetails'][0] == {'centre': 'test_user_centre',
+                                                                            'email': 'test_user_email@abc.com',
+                                                                            'firstName': 'test_user_first_name',
+                                                                            'laboratory': 'test_user_laboratory',
+                                                                            'lastName': 'test_user_last_name'}
+        else:
+            assert response_data['submissionId'] == submission_id
+            assert response_data['projectTitle'] == 'test_project_title'
+            assert response_data['projectDescription'] == 'test_project_description'
+            assert response_data['metadataJson']['project'] == {'centre': 'test_project_centre',
+                                                                'description': 'test_project_description',
+                                                                'taxId': 1234,
+                                                                'title': 'test_project_title'}
+            assert response_data['metadataJson']['files'][0] == {'analysisAlias': 'AA', 'fileName': 'input_passed.vcf',
+                                                                 'fileSize': 45050, 'fileType': 'vcf'}
+            assert response_data['metadataJson']['submitterDetails'][0] == {'centre': 'test_user_centre',
+                                                                            'email': 'test_user_email@abc.com',
+                                                                            'firstName': 'test_user_first_name',
+                                                                            'laboratory': 'test_user_laboratory',
+                                                                            'lastName': 'test_user_last_name'}
 
         # assert emails sent for submission upload
         mailhog_email_mgs_url = get_properties_from_xml_file("docker", settings_file)['mailhog.email-messages']
