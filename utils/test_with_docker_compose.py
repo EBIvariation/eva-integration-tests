@@ -3,7 +3,7 @@ import shutil
 from unittest import TestCase
 
 from utils.docker_utils import build_from_docker_compose, \
-    stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose
+    stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose, read_file_from_container
 
 
 class TestWithDockerCompose(TestCase):
@@ -19,6 +19,7 @@ class TestWithDockerCompose(TestCase):
     docker_compose_file = None
     container_name = None
     container_submission_dir = None
+    log_file = None
 
     @classmethod
     def setUpClass(cls):
@@ -38,6 +39,16 @@ class TestWithDockerCompose(TestCase):
         os.makedirs(self.test_run_dir, exist_ok=True)
 
     def tearDown(self):
+        # Show the log file to get a better description of what happened
+        if self.log_file:
+            try:
+                output = read_file_from_container(self.container_name, self.log_file)
+                print('Log file:')
+                print(output)
+            except Exception as e:
+                print(f'Failed to read log {self.log_file} file from {self.container_name}')
+                print(str(e))
+
         # delete test run directory
         if os.path.exists(self.test_run_dir):
             shutil.rmtree(self.test_run_dir)

@@ -29,7 +29,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         super().setUp()
         # create metadata xlsx file
         shutil.copyfile(
-            os.path.join(self.resources_directory, 'metadata_spreadsheets', 'EVA_Submission_v2.0_cpombe.xlsx'),
+            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
             self.metadata_xlsx
         )
 
@@ -45,9 +45,9 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
-
+        self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {self.log_file}"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)

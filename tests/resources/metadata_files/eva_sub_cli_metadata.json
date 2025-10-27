@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/EBIvariation/eva-sub-cli/refs/tags/v0.5.0/eva_sub_cli/etc/eva_schema.json",
+  "submitterDetails": [{
+    "lastName": "test_user_last_name",
+    "firstName": "test_user_first_name",
+    "email": "test_user_email@abc.com",
+    "laboratory": "test_user_laboratory",
+    "centre": "test_user_centre"
+  }],
+  "project": {
+    "title": "test_project_title",
+    "description": "test_project_description",
+    "centre": "test_project_centre",
+    "taxId": 1234
+  },
+  "analysis": [{
+    "analysisTitle": "test_analysis_title",
+    "analysisAlias": "AA", "description": "test_analysis_description",
+    "experimentType": "Whole genome sequencing",
+    "referenceGenome": "GCA_000002945.2",
+    "referenceFasta": "/opt/reference_sequences/nitrospira/GCA_000002945.2/GCA_000002945.2.fa",
+    "assemblyReport": "/opt/reference_sequences/nitrospira/GCA_000002945.2/GCA_000002945.2_assembly_report.txt"
+  }],
+  "sample": [{
+      "analysisAlias": ["AA"],
+      "sampleInVCF": "S1",
+      "bioSampleObject": {
+        "characteristics": {
+          "title": [{"text": "The Schizosaccharomyces pombe  sample"}],
+          "taxId": [{"text": "4896"}],
+          "scientific name": [{"text": "Schizosaccharomyces pombe"}],
+          "collection date": [{"text": "2021-02-27"}],
+          "geographic location (country and/or sea)": [{"text": "United Kingdom"}],
+          "species": [{"text": "Schizosaccharomyces pombe"}]
+        },
+        "name": "S1"
+      }
+  }],
+  "files": [{
+    "analysisAlias": "AA",
+    "fileName": "vcf_file_ASM294v2.vcf"
+  }]
+}
