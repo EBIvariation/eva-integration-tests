@@ -15,7 +15,7 @@ RUN apt update  \
     && apt -qq install -y curl wget samtools bcftools tabix bedtools minimap2 rsync
 
 # Install JAVA and Node
-RUN apt update && apt install -y default-jdk nodejs npm git curl
+RUN apt update && apt -qq install -y default-jdk nodejs npm git curl
 
 # Install VCF validator
 RUN curl -LJo /usr/local/bin/vcf_validator  https://github.com/EBIvariation/vcf-validator/releases/download/v${vcf_validator_version}/vcf_validator_linux \
@@ -44,8 +44,8 @@ COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_submission/install_repo.sh /opt/
 
 
-ENV SOURCE_GITHUB_REPOSITORY $SOURCE_GITHUB_REPOSITORY
-ENV SOURCE_GITHUB_REF $SOURCE_GITHUB_REF
+ENV SOURCE_GITHUB_REPOSITORY tcezard/eva-submission
+ENV SOURCE_GITHUB_REF existing_project
 ENV SOURCE_GITHUB_SHA $SOURCE_GITHUB_SHA
 
 # Run the installation of the repository
