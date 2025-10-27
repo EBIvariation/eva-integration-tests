@@ -13,7 +13,7 @@ git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-submission
 cd eva-submission
 git checkout ${SOURCE_GITHUB_REF}
 
-python -m pip install .
+python -m pip -q install .
 
 
 cd ..

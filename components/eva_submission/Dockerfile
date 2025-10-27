@@ -15,7 +15,7 @@ RUN apt update  \
     && apt -qq install -y curl wget samtools bcftools tabix bedtools minimap2 rsync
 
 # Install JAVA and Node
-RUN apt update && apt install -y default-jdk nodejs npm git curl
+RUN apt update && apt -qq install -y default-jdk nodejs npm git curl
 
 # Install VCF validator
 RUN curl -LJo /usr/local/bin/vcf_validator  https://github.com/EBIvariation/vcf-validator/releases/download/v${vcf_validator_version}/vcf_validator_linux \
