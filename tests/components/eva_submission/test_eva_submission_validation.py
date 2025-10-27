@@ -47,7 +47,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
         self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {self.log_file}"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {self.log_file} 2>&1'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
