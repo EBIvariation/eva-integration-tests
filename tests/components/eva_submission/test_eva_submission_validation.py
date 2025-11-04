@@ -27,8 +27,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
     @classmethod
     def setUpClass(cls):
         # TODO: Remove before merge
-        os.environ['SOURCE_GITHUB_REPOSITORY'] = 'apriltuesday/eva-submission'
-        os.environ['SOURCE_GITHUB_REF'] = 'EVA-3950'
+        os.environ['SOURCE_GITHUB_REF'] = 'cli-tasks-integration'
 
         super().setUpClass()
 
