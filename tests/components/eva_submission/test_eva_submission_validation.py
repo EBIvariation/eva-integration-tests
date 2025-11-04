@@ -90,10 +90,11 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
                                   os.path.join(self.container_eload_dir),
                                   self.test_run_dir)
         # assert results
+        tasks = ['metadata_check', 'structural_variant_check']
         self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
                                                            f'.ELOAD_{self.eload_number}_config.yml'),
-                                              tasks=['metadata_check', 'structural_variant_check'])
-        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
+                                              tasks=tasks)
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
@@ -123,7 +124,10 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
             assert config.query('validation', check,
                                 'pass'), f'{check} is not present or valid in the configuration file'
 
-    def assert_directory_structure(self, eload_folder):
+    def assert_directory_structure(self, eload_folder, tasks=[
+        'vcf_check', 'assembly_check', 'metadata_check', 'sample_check', 'structural_variant_check',
+        'naming_convention_check'
+    ]):
         # Check that the eva-sub-cli output file have been copied to the 13_validation folder
         report_txt = os.path.join(eload_folder, '13_validation', 'eva_sub_cli', 'validation_output', 'report.txt')
         assert os.path.isfile(report_txt)
@@ -131,6 +135,11 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         assert os.path.isfile(result_yaml)
         with open(result_yaml) as open_file:
             cli_results = yaml.safe_load(open_file)
-        report_path = cli_results['assembly_check']['vcf_file_ASM294v2.vcf']['report_path'].replace(
-            self.container_eload_dir, self.test_run_dir)
-        assert os.path.isfile(report_path)
+        if 'assembly_check' in tasks:
+            assembly_report_path = cli_results['assembly_check']['vcf_file_ASM294v2.vcf']['report_path'].replace(
+                self.container_eload_dir, self.test_run_dir)
+            assert os.path.isfile(assembly_report_path)
+        if 'metadata_check' in tasks:
+            metadata_report_path = cli_results['metadata_check']['json_report_path'].replace(
+                self.container_eload_dir, self.test_run_dir)
+            assert os.path.isfile(metadata_report_path)
