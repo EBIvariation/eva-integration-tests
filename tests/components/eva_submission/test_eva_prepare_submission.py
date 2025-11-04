@@ -50,7 +50,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
         copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
         copy_files_to_container(self.container_name, self.container_submission_dir,
-                                os.path.join(self.resources_directory, 'metadata_spreadsheets',
+                                os.path.join(self.resources_directory, 'metadata_files',
                                              'EVA_Submission_v2.0_cpombe.xlsx'))
 
     def setup_test_data_for_metadata_json_from_webservice(self):

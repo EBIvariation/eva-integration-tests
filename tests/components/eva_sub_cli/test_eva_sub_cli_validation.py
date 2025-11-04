@@ -62,7 +62,7 @@ class TestEvaSubCliValidation(TestCase):
             json.dump(sub_metadata_existing_project, open_metadata_existing_project)
         # create metadata xlsx file
         shutil.copyfile(
-            os.path.join(self.resources_directory, 'metadata_spreadsheets', 'EVA_Submission_Docker_Test.xlsx'),
+            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_Docker_Test.xlsx'),
             self.metadata_xlsx
         )
 

@@ -1,0 +1,38 @@
+submission:
+  analyses:
+    ELOAD_{ELOAD_number}_AA: &id002
+      assembly_accession: GCA_000002945.2
+      assembly_fasta: /opt/reference_sequences/nitrospira/GCA_000002945.2/GCA_000002945.2.fa
+      assembly_report: /opt/reference_sequences/nitrospira/GCA_000002945.2/GCA_000002945.2_assembly_report.txt
+      vcf_files:
+      - /opt/submissions/ELOAD_{ELOAD_number}/10_submitted/vcf_files/vcf_file_ASM294v2.vcf
+  metadata_json: /opt/submissions/ELOAD_{ELOAD_number}/10_submitted/metadata_file/eva_sub_cli_metadata.json
+  project_title: test_project_title
+  scientific_name: Nitrospira
+  taxonomy_id: 1234
+validation:
+  aggregation_check:
+    analyses:
+      AA: none
+  eva_sub_cli:
+    pass: true
+  naming_convention_check:
+    files:
+      vcf_file_ASM294v2.vcf:
+        assembly_accession: GCA_000002945.2
+        naming_convention: enaSequenceName
+        naming_convention_map: null
+        vcf_file: vcf_file_ASM294v2.vcf
+    naming_convention: enaSequenceName
+    pass: true
+  structural_variant_check:
+    files:
+      vcf_file_ASM294v2.vcf:
+        has_structural_variant: false
+        number_sv: 0
+    pass: true
+  valid:
+    analyses:
+      ELOAD_{ELOAD_number}_AA: *id002
+    metadata_json: /opt/submissions/ELOAD_{ELOAD_number}/10_submitted/metadata_file/eva_sub_cli_metadata.json
+version: 1.19.1.dev0
