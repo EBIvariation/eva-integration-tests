@@ -24,13 +24,6 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
     container_eload_dir = '/opt/submissions'
 
-    @classmethod
-    def setUpClass(cls):
-        # TODO: Remove before merge
-        os.environ['SOURCE_GITHUB_REF'] = 'cli-tasks-integration'
-
-        super().setUpClass()
-
     def setUp(self):
         super().setUp()
         # create metadata xlsx file

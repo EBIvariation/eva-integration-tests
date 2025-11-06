@@ -23,13 +23,6 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
     container_submission_dir_json_webservice = f'/opt/ftp/private/eva-sub-cli/upload/{submission_account_id}/{submission_id}'
     container_eload_dir = '/opt/submissions'
 
-    @classmethod
-    def setUpClass(cls):
-        # TODO: Remove before merge
-        os.environ['SOURCE_GITHUB_REF'] = 'cli-tasks-integration'
-
-        super().setUpClass()
-
     def setUp(self):
         super().setUp()
 
