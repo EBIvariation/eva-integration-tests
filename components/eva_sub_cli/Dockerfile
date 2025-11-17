@@ -36,8 +36,8 @@ RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-${D
 
 COPY install_repo.sh /opt/
 
-ENV SOURCE_GITHUB_REPOSITORY $SOURCE_GITHUB_REPOSITORY
-ENV SOURCE_GITHUB_REF $SOURCE_GITHUB_REF
+ENV SOURCE_GITHUB_REPOSITORY nitin-ebi/eva-sub-cli
+ENV SOURCE_GITHUB_REF remove-non-vcf-file
 ENV SOURCE_GITHUB_SHA $SOURCE_GITHUB_SHA
 
 # Run the installation of the repository
