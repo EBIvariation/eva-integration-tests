@@ -402,8 +402,7 @@ class TestEvaSubCliValidation(TestCase):
             {
                 "analysisAlias": "AA",
                 "fileName": "input_passed.vcf",
-                "fileSize": 45050,
-                "fileType": "vcf"
+                "fileSize": 45050
             }
         ]
         return json_metadata
@@ -645,7 +644,7 @@ class TestEvaSubCliValidation(TestCase):
         if existing_project:
             assert response_data['submissionId'] == submission_id
             assert response_data['metadataJson']['files'][0] == {'analysisAlias': 'AA', 'fileName': 'input_passed.vcf',
-                                                                 'fileSize': 45050, 'fileType': 'vcf'}
+                                                                 'fileSize': 45050}
             assert response_data['metadataJson']['submitterDetails'][0] == {'centre': 'test_user_centre',
                                                                             'email': 'test_user_email@abc.com',
                                                                             'firstName': 'test_user_first_name',
@@ -660,7 +659,7 @@ class TestEvaSubCliValidation(TestCase):
                                                                 'taxId': 1234,
                                                                 'title': 'test_project_title'}
             assert response_data['metadataJson']['files'][0] == {'analysisAlias': 'AA', 'fileName': 'input_passed.vcf',
-                                                                 'fileSize': 45050, 'fileType': 'vcf'}
+                                                                 'fileSize': 45050}
             assert response_data['metadataJson']['submitterDetails'][0] == {'centre': 'test_user_centre',
                                                                             'email': 'test_user_email@abc.com',
                                                                             'firstName': 'test_user_first_name',
