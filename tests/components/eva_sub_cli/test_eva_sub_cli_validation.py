@@ -391,8 +391,7 @@ class TestEvaSubCliValidation(TestCase):
             {
                 "analysisAlias": "AA",
                 "fileName": "input_passed.vcf",
-                "fileSize": 45050,
-                "fileType": "vcf"
+                "fileSize": 45050
             }
         ]
         return json_metadata
