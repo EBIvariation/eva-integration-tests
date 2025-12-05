@@ -44,8 +44,8 @@ COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_submission/install_repo.sh /opt/
 
 
-ENV SOURCE_GITHUB_REPOSITORY $SOURCE_GITHUB_REPOSITORY
-ENV SOURCE_GITHUB_REF $SOURCE_GITHUB_REF
+ENV SOURCE_GITHUB_REPOSITORY apriltuesday/eva-submission
+ENV SOURCE_GITHUB_REF json2xml-fixes
 ENV SOURCE_GITHUB_SHA $SOURCE_GITHUB_SHA
 
 # Run the installation of the repository
