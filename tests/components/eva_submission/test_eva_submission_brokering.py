@@ -11,7 +11,6 @@ from utils.test_with_docker_compose import TestWithDockerCompose
 
 
 class TestEvaSubmissionBrokering(TestWithDockerCompose):
-
     vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
     fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
     assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
@@ -21,7 +20,8 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
     old_metadata_xlsx = os.path.join(test_run_dir, 'old_metadata_xlsx.xlsx')
     metadata_json = os.path.join(test_run_dir, 'eva_sub_cli_metadata.json')
 
-    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'docker-compose-eva-submission.yml')
+    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
+                                       'docker-compose-eva-submission.yml')
     container_name = 'eva_submission_test'
     container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
@@ -53,6 +53,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         self.eload_number1 = random.randint(1, 10000)
         self.eload_number2 = random.randint(1, 10000)
         self.eload_number3 = random.randint(1, 10000)
+        self.eload_number4 = random.randint(1, 10000)
 
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
@@ -84,8 +85,8 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
                                   self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}', f'.ELOAD_{self.eload_number1}_config.yml'))
-
+        self.assert_brokering_pass_in_config(
+            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}', f'.ELOAD_{self.eload_number1}_config.yml'))
 
     def test_submission_with_old_metadata_spreadsheet(self):
         self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number2}/broker.out'
@@ -101,7 +102,8 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
                                   self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number2}', f'.ELOAD_{self.eload_number2}_config.yml'))
+        self.assert_brokering_pass_in_config(
+            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number2}', f'.ELOAD_{self.eload_number2}_config.yml'))
 
     def test_submission_with_existing_project(self):
         self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number3}/broker.out'
@@ -120,16 +122,46 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         self.assert_brokering_pass_in_config(
             os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number3}', f'.ELOAD_{self.eload_number3}_config.yml'))
 
+    def test_submission_with_ena_xml(self):
+        prepare_cmd = (
+            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number4}"
+        )
+
+        # Run preparation from command line
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+
+        validation_cmd = (
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number4} > {self.container_eload_dir}/ELOAD_{self.eload_number4}/validation.out 2>&1'"
+        )
+        # Run validation from command line
+        run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+
+        self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number4}/broker.out'
+        brokering_cmd = (
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --eload {self.eload_number4} --output_format xml > {self.log_file} 2>&1'"
+        )
+        # Run brokering from command line
+        run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_eload_dir),
+                                  self.test_run_dir)
+
+        # assert results
+        self.assert_brokering_pass_in_config(
+            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number4}', f'.ELOAD_{self.eload_number4}_config.yml'))
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Get the config file from the container and update the username and password for Webin
         yaml_content = read_file_from_container(self.container_name,
                                                 os.path.join('/root', '.submission_config.yml'))
         submission_config = yaml.safe_load(yaml_content)
-        submission_config['biosamples'].update({'webin_username': self.webin_username, 'webin_password': self.webin_password})
+        submission_config['biosamples'].update(
+            {'webin_username': self.webin_username, 'webin_password': self.webin_password})
         submission_config['ena'].update({'username': self.webin_username, 'password': self.webin_password})
 
-        tmp_yml =  os.path.join(self.test_run_dir, '.submission_config.yml')
+        tmp_yml = os.path.join(self.test_run_dir, '.submission_config.yml')
         with open(tmp_yml, 'w') as open_file:
             yaml.safe_dump(submission_config, open_file)
         copy_files_to_container(self.container_name, '/root', tmp_yml)
@@ -147,7 +179,8 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
             copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
 
         # Prepared ELOAD with old spreadsheet
-        eload_config_template = os.path.join(self.resources_directory, 'ELOAD_configs', '.ELOAD_number_post_validation_spreadsheet.yml')
+        eload_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
+                                             '.ELOAD_number_post_validation_spreadsheet.yml')
         with open(eload_config_template, 'r') as open_file:
             open_file_content = open_file.read().format(ELOAD_number=str(self.eload_number2))
         eload_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number2}_config.yml')
@@ -156,7 +189,8 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         eload2_dir = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number2}')
         copy_files_to_container(self.container_name, eload2_dir, eload_config_file)
         copy_files_to_container(self.container_name, os.path.join(eload2_dir, '10_submitted', 'vcf_files'), vcf_file)
-        copy_files_to_container(self.container_name, os.path.join(eload2_dir, '10_submitted', 'metadata_file'), self.old_metadata_xlsx)
+        copy_files_to_container(self.container_name, os.path.join(eload2_dir, '10_submitted', 'metadata_file'),
+                                self.old_metadata_xlsx)
 
         # Prepared ELOAD for existing project
         eload_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
@@ -169,7 +203,8 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         eload3_dir = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number3}')
         copy_files_to_container(self.container_name, eload3_dir, eload_config_file)
         copy_files_to_container(self.container_name, os.path.join(eload3_dir, '10_submitted', 'vcf_files'), vcf_file)
-        copy_files_to_container(self.container_name, os.path.join(eload3_dir, '10_submitted', 'metadata_file'), self.metadata_json)
+        copy_files_to_container(self.container_name, os.path.join(eload3_dir, '10_submitted', 'metadata_file'),
+                                self.metadata_json)
 
     def assert_brokering_pass_in_config(self, eload_config_yml):
         # Check that the config file exists
