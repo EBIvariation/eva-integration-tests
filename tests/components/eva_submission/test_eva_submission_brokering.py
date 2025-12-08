@@ -50,10 +50,10 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         # The ELOAD number is used to generate the project alias which needs to be unique on ENA's side.
         # ENA's test server should delete the submissions every 24 hours
         # Probability that we use the same ELOAD number twice over 24 hours is low
-        self.eload_number1 = random.randint(1, 10000)
-        self.eload_number2 = random.randint(1, 10000)
-        self.eload_number3 = random.randint(1, 10000)
-        self.eload_number4 = random.randint(1, 10000)
+        self.eload_number1 = random.randint(1, 1000000)
+        self.eload_number2 = random.randint(1, 1000000)
+        self.eload_number3 = random.randint(1, 1000000)
+        self.eload_number4 = random.randint(1, 1000000)
 
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
