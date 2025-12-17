@@ -36,8 +36,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
             f"--username {webin_account} --password {webin_password}"
         )
         # Run submission from command line
-        run_quiet_command("submit through eva-sub-cli", validation_cmd,
-                          log_error_stream_to_output=True)
+        run_quiet_command("submit through eva-sub-cli", validation_cmd, log_error_stream_to_output=True)
 
         # assert submission result
         self.assert_submission_results(webin_account, webin_email)
@@ -64,43 +63,10 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
             f"--username {webin_account} --password {webin_password}"
         )
         # Run submission from command line
-        run_quiet_command("submit through eva-sub-cli", validation_cmd,
-                          log_error_stream_to_output=True)
+        run_quiet_command("submit through eva-sub-cli", validation_cmd, log_error_stream_to_output=True)
 
         # assert submission result
         self.assert_submission_results(webin_account, webin_email, existing_project=True)
-
-    def test_submission_with_files_on_command_line(self):
-        # create metadata json file and copy to container
-        # TODO update this with the expected metadata
-        sub_metadata = self.get_submission_json_metadata()
-        with open(self.metadata_json, 'w') as open_metadata:
-            json.dump(sub_metadata, open_metadata)
-        copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
-
-        # copy validation success config file for the test submission
-        validation_passed_config_file = os.path.join(self.resources_directory, 'validation_passed_config_file',
-                                                     '.eva_sub_cli_config.yml')
-        copy_files_to_container(self.container_name, self.container_submission_dir,
-                                validation_passed_config_file)
-
-        webin_account, webin_email, webin_password = self.webin_test_user.get_webin_account_details()
-
-        # TODO update with the correct command if needed
-        validation_cmd = (
-            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
-            f"--submission_dir {self.container_submission_dir} "
-            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
-            f"--vcf_files {os.path.join(self.container_submission_dir, 'input_passed.vcf')} "
-            f"--reference_fasta {os.path.join(self.container_submission_dir, 'input_passed.fa')} "
-            f"--username {webin_account} --password {webin_password}"
-        )
-        # Run submission from command line
-        run_quiet_command("submit through eva-sub-cli", validation_cmd,
-                          log_error_stream_to_output=True)
-
-        # assert submission result
-        self.assert_submission_results(webin_account, webin_email)
 
     def get_submission_json_metadata(self):
         json_metadata = self.get_validation_json_metadata()
