@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from tests.webin.webin_test_user import WebinTestUser
 from utils.docker_utils import stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose, \
-    build_from_docker_compose
+    build_from_docker_compose, copy_files_to_container
 
 
 class TestEvaSubCli(TestCase):
@@ -54,6 +54,12 @@ class TestEvaSubCli(TestCase):
         # stop and remove container
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
 
+    def create_submission_dir_and_copy_files_to_container(self):
+        for directory in [self.vcf_files_dir, self.fasta_files_dir, self.assembly_reports_dir]:
+            for file in os.listdir(directory):
+                file_path = os.path.join(directory, file)
+                copy_files_to_container(self.container_name, self.container_submission_dir, file_path)
+
     def get_validation_json_metadata_existing_project(self):
         json_metadata = self.get_validation_json_metadata()
         json_metadata['project'] = {'projectAccession': 'PRJEB12770'}
@@ -65,6 +71,30 @@ class TestEvaSubCli(TestCase):
             "analysisAlias": "AA",
             "fileName": "input_passed.vcf.gz.tbi"
         })
+        return json_metadata
+
+    def get_validation_json_metadata_without_files(self):
+        json_metadata = self.get_validation_json_metadata()
+        json_metadata['files'] = []
+        return json_metadata
+
+    def get_validation_json_metadata_multiple_analysis_without_files(self):
+        json_metadata = self.get_validation_json_metadata()
+        json_metadata['analysis'].append({
+                    "analysisTitle": "another_analysis_title",
+                    "analysisAlias": "BB",
+                    "description": "another_analysis_description",
+                    "experimentType": "Whole genome sequencing",
+                    "referenceGenome": "test_analysis_reference_genome",
+                    "referenceFasta": "input_passed.fa",
+                    "assemblyReport": "input_passed.txt"
+                })
+        json_metadata['sample'].append({
+                    "analysisAlias": ["BB"],
+                    "sampleInVCF": "HG00097",
+                    "bioSampleAccession": "SAME456"
+                })
+        json_metadata['files'] = []
         return json_metadata
 
     def get_validation_json_metadata(self):

@@ -62,9 +62,9 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_xlsx)
 
-    def test_native_validator_with_vcf_files(self):
+    def test_native_validator_with_files_on_command_line(self):
         # create metadata json file and copy to container
-        sub_metadata = self.get_validation_json_metadata()
+        sub_metadata = self.get_validation_json_metadata_without_files()
         with open(self.metadata_json, 'w') as open_metadata:
             json.dump(sub_metadata, open_metadata)
         copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
@@ -85,6 +85,34 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                   os.path.join(self.container_submission_dir, 'validation_output'),
                                   self.eva_sub_cli_test_run_dir)
         # assert results
+        self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
+                                       'Validation passed successfully.', self.get_expected_semantic_val(),
+                                       self.metadata_json)
+
+    def test_native_validator_with_multiple_analysis_files_on_command_line(self):
+        # create metadata json file and copy to container
+        sub_metadata = self.get_validation_json_metadata_multiple_analysis_without_files()
+        with open(self.metadata_json, 'w') as open_metadata:
+            json.dump(sub_metadata, open_metadata)
+        copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
+
+        validation_cmd = (
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
+            f"--submission_dir {self.container_submission_dir} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
+            f"--vcf_files {os.path.join(self.container_submission_dir, 'input_passed.vcf')} "
+            f"--reference_fasta {os.path.join(self.container_submission_dir, 'input_passed.fa')} "
+        )
+        # Run validation from command line
+        run_quiet_command("run eva_sub_cli native validator with vcf files and reference fasta using command line",
+                          validation_cmd, log_error_stream_to_output=True)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_submission_dir, 'validation_output'),
+                                  self.eva_sub_cli_test_run_dir)
+        # assert results - validation should fail
+        # TODO update this to assert the expected failure
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_json)
@@ -271,12 +299,6 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_xlsx)
-
-    def create_submission_dir_and_copy_files_to_container(self):
-        for directory in [self.vcf_files_dir, self.fasta_files_dir, self.assembly_reports_dir]:
-            for file in os.listdir(directory):
-                file_path = os.path.join(directory, file)
-                copy_files_to_container(self.container_name, self.container_submission_dir, file_path)
 
     def get_expected_metadata_files_json(self):
         return [
