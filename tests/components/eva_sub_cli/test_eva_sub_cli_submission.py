@@ -27,7 +27,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
         copy_files_to_container(self.container_name, self.container_submission_dir,
                                 validation_passed_config_file)
 
-        webin_account, webin_email, webin_password = self.webin_test_user.get_webin_account_details()
+        webin_account, webin_email, webin_password = self.webin_test_user.get_webin_submission_account_details()
 
         validation_cmd = (
             f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
@@ -54,7 +54,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
         copy_files_to_container(self.container_name, self.container_submission_dir,
                                 validation_passed_config_file)
 
-        webin_account, webin_email, webin_password = self.webin_test_user.get_webin_account_details()
+        webin_account, webin_email, webin_password = self.webin_test_user.get_webin_submission_account_details()
 
         validation_cmd = (
             f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
