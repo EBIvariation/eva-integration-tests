@@ -7,7 +7,7 @@ import yaml
 from tests.components.eva_sub_cli.test_eva_sub_cli import TestEvaSubCli
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
+from utils.test_with_docker_compose import log_on_failure
 
 
 class TestEvaSubCliValidation(TestEvaSubCli):

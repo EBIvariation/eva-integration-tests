@@ -18,7 +18,11 @@ services:
         condition: service_healthy
       oracle_db:
         condition: service_healthy
+      mongo_db:
+        condition: service_healthy
       eva-submission-ws:
+        condition: service_started
+      mock-ws:
         condition: service_started
     networks:
       - eva_network
@@ -39,7 +43,7 @@ services:
       - eva_network
 
   contig-alias:
-    image: contig-alias
+    image: contig_alias_ws_test
     build:
       # context to where the maven file is located
       context: .
@@ -93,6 +97,40 @@ services:
       timeout: 10s
       retries: 10
       start_period: 180s
+
+  mongo_db:
+    image: mongo_db_test
+    build:
+      context: ./mongo_db
+      dockerfile: Dockerfile
+    container_name: mongo_db_test
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - eva_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --port 27017 --eval \"db.adminCommand({ listShards: 1 }).ok\" | grep 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  mock-ws:
+    image: mock_ws_test
+    build:
+      context: ./mock_ws
+      dockerfile: Dockerfile
+    container_name: mock_ws_test
+    restart: always
+    ports:
+      - 8082:8080
+    networks:
+      - eva_network
 
 networks:
   eva_network:
