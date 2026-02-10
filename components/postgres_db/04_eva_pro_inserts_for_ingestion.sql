@@ -26,3 +26,15 @@ INSERT INTO evapro.file_class_cv (file_class_id, file_class)
 VALUES (3, 'eva_value_added');
 INSERT INTO evapro.file_class_cv (file_class_id, file_class)
 VALUES (4, 'fixed_for_eva');
+
+--- Inserts for taxonomy
+INSERT INTO evapro.taxonomy (taxonomy_id, common_name, scientific_name, taxonomy_code, eva_name)
+VALUES (4896, 'fission yeast', 'Schizosaccharomyces pombe', 'spombe', 'fission yeast');
+
+--- Inserts for assembly_set
+INSERT INTO evapro.assembly_set (assembly_set_id, taxonomy_id, assembly_name, assembly_code)
+VALUES (34, 4896, 'ASM294v2', 'asm294v2');
+
+--- Inserts for accessioned_assembly
+INSERT INTO evapro.accessioned_assembly (assembly_set_id, assembly_accession, assembly_chain, assembly_version)
+VALUES (34, 'GCA_000002945.2', 'GCA_000002945', 2);
