@@ -16,6 +16,8 @@ services:
     depends_on:
       postgres_db:
         condition: service_healthy
+      oracle_db:
+        condition: service_healthy
       eva-submission-ws:
         condition: service_started
     networks:
@@ -71,6 +73,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  oracle_db:
+    image: oracle_db_test
+    build:
+      context: ./oracle_db
+      dockerfile: Dockerfile
+    container_name: oracle_db_test
+    restart: always
+    environment:
+      ORACLE_PASSWORD: oracle_pass
+    ports:
+      - 1521:1521
+    networks:
+      - eva_network
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/oracle_init_complete"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
 
 networks:
   eva_network:
