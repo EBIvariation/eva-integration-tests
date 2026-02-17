@@ -122,8 +122,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
 
             self.assert_call_home_events_exist(expected_events= ['START', 'END'],
                                                expected_tasks_list=['submit', 'submit'],
-                                               expected_executors=['native', 'native'],
-                                               metadata_connection_handle=metadata_connection_handle)
+                                               expected_executors=['native', 'native'])
         # assert details from webservice
 
         # assert submission status
