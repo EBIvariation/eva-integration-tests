@@ -12,7 +12,8 @@ RUN cp -avT /usr/local/tomcat/webapps.dist/manager /usr/local/tomcat/webapps/man
 WORKDIR /usr/local/software
 
 # deploy eva-submission-ws
-RUN git clone https://github.com/EBIvariation/eva-submission-ws.git
+RUN git clone https://github.com/tcezard/eva-submission-ws.git; cd eva-submission-ws ; git checkout update_event_tasks
+
 RUN mvn package -s /root/maven-settings.xml -f eva-submission-ws/pom.xml -P docker -DskipTests
 RUN cp eva-submission-ws/target/eva-submission-ws-*.war.original /usr/local/tomcat/webapps/eva#webservices#submission-ws.war
 

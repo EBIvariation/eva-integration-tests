@@ -1,13 +1,16 @@
 import os
-import shutil
-from unittest import TestCase
+
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
+from ebi_eva_common_pyutils.logger import logging_config as log_cfg
 
 from tests.webin.webin_test_user import WebinTestUser
-from utils.docker_utils import stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose, \
-    build_from_docker_compose, copy_files_to_container
+from utils.docker_utils import copy_files_to_container
+from utils.test_with_docker_compose import TestWithDockerCompose
 
+logger = log_cfg.get_logger(__name__)
 
-class TestEvaSubCli(TestCase):
+class TestEvaSubCli(TestWithDockerCompose):
     root_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
     tests_directory = os.path.join(root_dir, 'tests')
     resources_directory = os.path.join(tests_directory, 'resources')
@@ -16,43 +19,21 @@ class TestEvaSubCli(TestCase):
     fasta_files_dir = os.path.join(resources_directory, 'fasta_files')
     assembly_reports_dir = os.path.join(resources_directory, 'assembly_reports')
 
-    eva_sub_cli_test_run_dir = os.path.join(tests_directory, 'eva_sub_cli_test_run')
-    metadata_json = os.path.join(eva_sub_cli_test_run_dir, 'metadata_json.json')
-    metadata_xlsx = os.path.join(eva_sub_cli_test_run_dir, 'metadata_xlsx.xlsx')
+    test_run_dir = os.path.join(tests_directory, 'eva_sub_cli_test_run')
+    metadata_json = os.path.join(test_run_dir, 'metadata_json.json')
+    metadata_xlsx = os.path.join(test_run_dir, 'metadata_xlsx.xlsx')
 
     docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose-eva-sub-cli.yml')
     container_name = 'eva_sub_cli_test'
     container_submission_dir = '/opt'
+    log_file = os.path.join(container_submission_dir, 'eva_submission.log')
 
     webin_test_user = WebinTestUser()
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # build and setup images/containers present in the docker compose file
-        build_from_docker_compose(cls.docker_compose_file)
-
     def setUp(self):
-        # stop and remove containers
-        stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
-        # start containers
-        start_all_containers_in_docker_compose(self.docker_compose_file)
-
-        # delete and recreate the test run dir
-        if os.path.exists(self.eva_sub_cli_test_run_dir):
-            shutil.rmtree(self.eva_sub_cli_test_run_dir)
-        os.makedirs(self.eva_sub_cli_test_run_dir, exist_ok=True)
-
+        super().setUp()
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
-
-    def tearDown(self):
-        # delete test run directory
-        if os.path.exists(self.eva_sub_cli_test_run_dir):
-            shutil.rmtree(self.eva_sub_cli_test_run_dir)
-
-        # stop and remove container
-        stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
 
     def create_submission_dir_and_copy_files_to_container(self):
         for directory in [self.vcf_files_dir, self.fasta_files_dir, self.assembly_reports_dir]:
@@ -139,3 +120,34 @@ class TestEvaSubCli(TestCase):
                 }
             ]
         }
+
+    def assert_call_home_events_exist(self, expected_events=None, expected_tasks_list=None, expected_executors=None, metadata_connection_handle=None):
+        if not metadata_connection_handle:
+            settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
+            metadata_connection_handle = get_metadata_connection_handle('docker', settings_file)
+        with metadata_connection_handle:
+            call_home_query = (f"SELECT event_type, tasks, executor, raw_payload FROM eva_submissions.call_home_event")
+            results = get_all_results_for_query(metadata_connection_handle, call_home_query)
+            event_types = []
+            tasks_list = []
+            raw_payloads = []
+            executors = []
+            for call_home_event in results:
+                event_type, tasks, executor, raw_payload = call_home_event
+                logger.warning(f'event_type={event_type}')
+                logger.warning(f'tasks={tasks}')
+                logger.warning(f'executors={executors}')
+                logger.warning(f'raw_payload={raw_payload}')
+                # id, deployment_id, run_id, event_type, cli_version, created_at, runtime_seconds, executor, tasks, raw_payload = call_home_event
+                event_types.append(event_type)
+                tasks_list.append(tasks)
+                executors.append(executor)
+                raw_payloads.append(raw_payload)
+            assert len(results) > 0
+            if expected_events is not None:
+                assert event_types == expected_events
+            if expected_tasks_list is not None:
+                assert tasks_list == expected_tasks_list
+            if expected_executors is not None:
+                assert executors == expected_executors
+            return raw_payloads

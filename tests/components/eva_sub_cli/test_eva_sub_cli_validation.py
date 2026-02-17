@@ -30,7 +30,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -56,7 +56,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -82,7 +82,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_partial_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
                                                'Validation passed successfully.', self.get_expected_semantic_val())
@@ -107,7 +107,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -133,7 +133,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -159,7 +159,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -185,7 +185,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -212,7 +212,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -239,7 +239,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         # copy validation output from docker
         copy_files_from_container(self.container_name,
                                   os.path.join(self.container_submission_dir, 'validation_output'),
-                                  self.eva_sub_cli_test_run_dir)
+                                  self.test_run_dir)
         # assert results
         self.assert_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json_docker(),
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
@@ -274,7 +274,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
 
     def assert_validation_results(self, expected_sample_checker, expected_metadata_files_json,
                                   expected_metadata_val, expected_semantic_val, metadata_type):
-        validation_output_dir = self.eva_sub_cli_test_run_dir
+        validation_output_dir = self.test_run_dir
 
         vcf_format_dir = os.path.join(validation_output_dir, 'vcf_format')
         self.assertTrue(os.path.exists(vcf_format_dir))
@@ -341,9 +341,14 @@ class TestEvaSubCliValidation(TestEvaSubCli):
             assert 'md5' in file and file['md5'] != ''
             assert 'fileSize' in file and file['fileSize'] != ''
 
+        self.assert_call_home_events_exist(expected_events= ['START', 'VALIDATION_COMPLETED', 'END'],
+                                           expected_executors= ['native', 'native', 'native'],
+                                           expected_tasks_list=['validate', 'validate', 'validate'])
+
+
     def assert_partial_validation_results(self, expected_sample_checker, expected_metadata_files_json,
                                           expected_metadata_val, expected_semantic_val):
-        validation_output_dir = self.eva_sub_cli_test_run_dir
+        validation_output_dir = self.test_run_dir
 
         # VCF check wasn't run
         vcf_format_dir = os.path.join(validation_output_dir, 'vcf_format')
