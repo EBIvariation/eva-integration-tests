@@ -9,8 +9,6 @@ if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; f
 
 echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
-SOURCE_GITHUB_REPOSITORY=tcezard/eva-sub-cli
-SOURCE_GITHUB_REF=fix/docker_arm
 git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-sub-cli
 cd eva-sub-cli
 git checkout ${SOURCE_GITHUB_REF}
