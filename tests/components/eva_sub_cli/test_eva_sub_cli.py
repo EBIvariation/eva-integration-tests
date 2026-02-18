@@ -134,11 +134,6 @@ class TestEvaSubCli(TestWithDockerCompose):
             executors = []
             for call_home_event in results:
                 event_type, tasks, executor, raw_payload = call_home_event
-                logger.warning(f'event_type={event_type}')
-                logger.warning(f'tasks={tasks}')
-                logger.warning(f'executors={executors}')
-                logger.warning(f'raw_payload={raw_payload}')
-                # id, deployment_id, run_id, event_type, cli_version, created_at, runtime_seconds, executor, tasks, raw_payload = call_home_event
                 event_types.append(event_type)
                 tasks_list.append(tasks)
                 executors.append(executor)
