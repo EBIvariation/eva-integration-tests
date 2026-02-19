@@ -13,7 +13,6 @@ WORKDIR /usr/local/software
 
 # deploy eva-submission-ws
 RUN git clone https://github.com/EBIvariation/eva-submission-ws.git
-
 RUN mvn package -s /root/maven-settings.xml -f eva-submission-ws/pom.xml -P docker -DskipTests
 RUN cp eva-submission-ws/target/eva-submission-ws-*.war.original /usr/local/tomcat/webapps/eva#webservices#submission-ws.war
 
