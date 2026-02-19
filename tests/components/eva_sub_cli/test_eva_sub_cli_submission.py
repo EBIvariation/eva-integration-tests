@@ -29,14 +29,14 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
 
         webin_account, webin_email, webin_password = self.webin_test_user.get_webin_submission_account_details()
 
-        validation_cmd = (
+        submission_cmd = (
             f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=SUBMIT "
             f"--submission_dir {self.container_submission_dir} "
             f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
             f"--username {webin_account} --password {webin_password}"
         )
         # Run submission from command line
-        run_quiet_command("submit through eva-sub-cli", validation_cmd, log_error_stream_to_output=True)
+        run_quiet_command("submit through eva-sub-cli", submission_cmd, log_error_stream_to_output=True)
 
         # assert submission result
         self.assert_submission_results(webin_account, webin_email)
@@ -120,6 +120,9 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
                 assert status == 'UPLOADED'
                 assert submission_account == submission_account_id
 
+            self.assert_call_home_events_exist(expected_events= ['START', 'END'],
+                                               expected_tasks_list=['submit', 'submit'],
+                                               expected_executors=['native', 'native'])
         # assert details from webservice
 
         # assert submission status

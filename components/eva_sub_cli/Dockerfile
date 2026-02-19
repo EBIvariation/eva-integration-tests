@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM --platform=linux/amd64 python:3.10
 
 ARG SOURCE_GITHUB_REPOSITORY
 ARG SOURCE_GITHUB_REF
@@ -6,7 +6,7 @@ ARG SOURCE_GITHUB_SHA
 
 ENV vcf_validator_version=0.10.0
 ENV NXF_VER=23.10.0
-ENV DOCKER_VER=24.0.7
+ENV DOCKER_VER=27.5.1
 
 
 WORKDIR /opt
@@ -20,7 +20,9 @@ RUN curl -LJo /usr/local/bin/vcf_validator  https://github.com/EBIvariation/vcf-
     && chmod 755 /usr/local/bin/vcf_assembly_checker /usr/local/bin/vcf_validator
 
 # Install biovalidator and make it executable
-RUN git clone https://github.com/elixir-europe/biovalidator.git  \
+RUN apt update && apt -qq install -y build-essential \
+    && pip3 install --break-system-packages gyp-next \
+    && git clone https://github.com/elixir-europe/biovalidator.git  \
     && cd biovalidator  \
     && npm install \
     && npm link

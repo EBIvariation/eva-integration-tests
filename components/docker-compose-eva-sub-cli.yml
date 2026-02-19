@@ -4,6 +4,8 @@ services:
     image: eva_sub_cli_test
     build:
       context: ./eva_sub_cli
+      platforms:
+        - "linux/amd64"
       dockerfile: Dockerfile
       args:
         SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
