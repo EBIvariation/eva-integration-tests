@@ -63,7 +63,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
 
         # assert results
-        self.assert_ingestion_pass_in_config(
+        self.assert_ingestion_archive_only_passed(
             os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml'))
 
     def create_submission_dir_and_copy_files_to_container(self):
@@ -95,7 +95,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         submission_config = yaml.safe_load(yaml_content)
         run_command_in_container(self.container_name, f"mkdir -p {submission_config['public_ftp_dir']}")
 
-    def assert_ingestion_pass_in_config(self, eload_config_yml):
+    def assert_ingestion_archive_only_passed(self, eload_config_yml):
         # Check that the config file exists
         assert os.path.isfile(eload_config_yml)
         config = Configuration(eload_config_yml)
