@@ -1,12 +1,5 @@
-CREATE USER metadata_db_user WITH PASSWORD 'metadata_db_pass';
-CREATE DATABASE metadata_db;
 -- Connect to the database
 \c metadata_db
-
-CREATE ROLE evapro;
-
------------------------------------------eva-submission-tables-----------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------
 
 --- schema (eva_submissions)
 CREATE SCHEMA eva_submissions AUTHORIZATION metadata_db_user;
@@ -112,13 +105,20 @@ GRANT ALL ON TABLE eva_submissions.submission_processing_status_aud to metadata_
 
 ALTER TABLE eva_submissions.submission_processing_status_aud ADD CONSTRAINT fk_submission_processing_status_aud_rev FOREIGN KEY (rev) REFERENCES eva_submissions.revinfo(rev);
 
+--- table (call_home_event)
+CREATE TABLE eva_submissions.call_home_event (
+	id bigserial NOT NULL,
+	cli_version varchar(255) NULL,
+	created_at timestamp NULL,
+	deployment_id varchar(255) NULL,
+	event_type varchar(255) NULL,
+	executor varchar(255) NULL,
+	raw_payload jsonb NOT NULL,
+	run_id varchar(255) NULL,
+	runtime_seconds int4 NULL,
+	tasks varchar(255) NULL,
+	CONSTRAINT call_home_event_pkey PRIMARY KEY (id)
+);
 
-CREATE TABLE eva_submissions.clustered_variant_update (
-        clustered_update_id INTEGER NOT NULL,
-        taxonomy_id INTEGER NOT NULL,
-        assembly_accession VARCHAR NOT NULL,
-        source TEXT NOT NULL,
-        ingestion_time DATETIME,
-        PRIMARY KEY (clustered_update_id)
-)
-CREATE INDEX eva_submissions.clustered_variant_update_idx ON eva_submissions.clustered_variant_update (project_accession);
+ALTER TABLE eva_submissions.call_home_event OWNER to metadata_db_user;
+GRANT ALL ON TABLE eva_submissions.call_home_event to metadata_db_user;

@@ -39,6 +39,12 @@ ena:
   submit_url: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit
   submit_async: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/queue
   ftphost: webin.ebi.ac.uk
+  ERA:
+    username: oracle_user
+    password: oracle_pass
+    host: oracle_db
+    port: 1521
+    database: FREEPDB1
 
 submissions:
   webservice:

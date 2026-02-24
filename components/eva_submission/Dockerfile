@@ -23,7 +23,9 @@ RUN curl -LJo /usr/local/bin/vcf_validator  https://github.com/EBIvariation/vcf-
     && chmod 755 /usr/local/bin/vcf_assembly_checker /usr/local/bin/vcf_validator
 
 # Install biovalidator and make it executable
-RUN git clone https://github.com/elixir-europe/biovalidator.git  \
+RUN apt update && apt -qq install -y build-essential \
+    && pip3 install --break-system-packages gyp-next \
+    && git clone https://github.com/elixir-europe/biovalidator.git  \
     && cd biovalidator  \
     && npm install \
     && npm link

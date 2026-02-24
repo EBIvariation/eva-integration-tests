@@ -1,0 +1,20 @@
+brokering:
+  analyses:
+    ELOAD_{ELOAD_number}_AA:
+      assembly_accession: GCA_000002945.2
+      assembly_fasta: /opt/reference_sequences/nitrospira/GCA_000002945.2/GCA_000002945.2.fa
+      assembly_report: /opt/reference_sequences/nitrospira/GCA_000002945.2/GCA_000002945.2_assembly_report.txt
+      vcf_files:
+        ? /opt/submissions/ELOAD_{ELOAD_number}/18_brokering/ena/vcf_file_ASM294v2.vcf.gz
+        : csi: /opt/submissions/ELOAD_{ELOAD_number}/18_brokering/ena/vcf_file_ASM294v2.vcf.gz.csi
+          csi_md5: 415c2d2180aefafa6d0d876b43945c45
+          md5: aac3fe9bd86b3c5b4f5585f22f9e47ea
+  ena:
+    ANALYSIS:
+      ELOAD_{ELOAD_number}_AA: ERZ28769990
+    PROJECT: PRJEB105137
+validation:
+  aggregation_check:
+    analyses:
+      ELOAD_{ELOAD_number}_AA: none
+version: 1.19.1.dev0

@@ -16,9 +16,9 @@
                 <eva.mongo.collections.features>features_2_0</eva.mongo.collections.features>
                 <eva.mongo.collections.annotations>annotations_2_0</eva.mongo.collections.annotations>
 
-                <eva.evapro.jdbc.url>jdbc:postgresql://postgres_db:5432/metadata</eva.evapro.jdbc.url>
-                <eva.evapro.user>metadata_user</eva.evapro.user>
-                <eva.evapro.password>metadata_pass</eva.evapro.password>
+                <eva.evapro.jdbc.url>jdbc:postgresql://postgres_db:5432/metadata_db</eva.evapro.jdbc.url>
+                <eva.evapro.user>metadata_db_user</eva.evapro.user>
+                <eva.evapro.password>metadata_db_pass</eva.evapro.password>
                 <eva.evapro.eva-stats.schema>eva_stats</eva.evapro.eva-stats.schema>
 
                 <eva.accession.mongo.database>eva_accession_sharded</eva.accession.mongo.database>

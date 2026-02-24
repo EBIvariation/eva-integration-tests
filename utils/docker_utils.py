@@ -113,3 +113,8 @@ def read_file_from_container(container_name, file_path, docker_path='docker'):
     return run_quiet_command("read content of the file from container",
                              f" {docker_path} exec {container_name} cat {file_path}",
                              return_process_output=True)
+
+def run_command_in_container(container_name, command_to_run, docker_path='docker'):
+    return run_quiet_command("run command in container",
+                             f" {docker_path} exec {container_name} {command_to_run}",
+                             return_process_output=True)
