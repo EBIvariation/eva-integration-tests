@@ -52,9 +52,10 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         self.create_submission_dir_and_copy_files_to_container()
 
     def test_ingestion_archive_only(self):
-        self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
+        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
+        self.container_log_files.append(self.container_name, log_file)
         ingestion_cmd = (
-            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks archive_only > {self.log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks archive_only > {log_file} 2>&1'"
         )
         # Run ingestion from command line
         run_quiet_command("run eva_submission ingest_submission script", ingestion_cmd)

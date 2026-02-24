@@ -10,6 +10,7 @@ from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 from tests.components.eva_sub_cli.test_eva_sub_cli import TestEvaSubCli
 from utils.docker_utils import copy_files_to_container, read_file_from_container
 from utils.test_utils import run_quiet_command
+from utils.test_with_docker_compose import TestWithDockerCompose
 
 
 class TestEvaSubCliSubmission(TestEvaSubCli):
@@ -90,6 +91,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
         ]
         return json_metadata
 
+    @TestWithDockerCompose.safe_assert
     def assert_submission_results(self, webin_account, webin_email, existing_project=False):
         # assert submission config file
         yaml_content = read_file_from_container(self.container_name,

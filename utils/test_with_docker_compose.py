@@ -19,7 +19,7 @@ class TestWithDockerCompose(TestCase):
     docker_compose_file = None
     container_name = None
     container_submission_dir = None
-    log_file = None
+    container_log_files = None
 
     @classmethod
     def setUpClass(cls):
@@ -39,19 +39,28 @@ class TestWithDockerCompose(TestCase):
         os.makedirs(self.test_run_dir, exist_ok=True)
 
     def tearDown(self):
-        # Show the log file to get a better description of what happened
-        if self.log_file:
-            try:
-                output = read_file_from_container(self.container_name, self.log_file)
-                print('Log file:')
-                print(output)
-            except Exception as e:
-                print(f'Failed to read log {self.log_file} file from {self.container_name}')
-                print(str(e))
-
         # delete test run directory
         if os.path.exists(self.test_run_dir):
             shutil.rmtree(self.test_run_dir)
 
         # stop and remove container
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
+
+    @staticmethod
+    def safe_assert(assert_function):
+        def wrapper(self, *args, **kwargs):
+            try:
+                assert_function(self, *args, **kwargs)
+            except Exception as original_exception:
+                # Show the log files to get a better description of what happened
+                if self.container_log_files:
+                    for container_name, log_file in self.container_log_files:
+                        try:
+                            output = read_file_from_container(container_name, log_file)
+                            print('Log file: ' + log_file)
+                            print(output)
+                        except Exception as e:
+                            print(f'Failed to read log {log_file} file from {container_name}')
+                            print(str(e))
+                raise original_exception
+        return wrapper
