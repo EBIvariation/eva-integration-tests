@@ -26,6 +26,7 @@
                 <eva.email-server>mailhog</eva.email-server>
                 <eva.email-port>1025</eva.email-port>
 
+                <callhome.schema-url>https://raw.githubusercontent.com/EBIvariation/eva-sub-cli/main/eva_sub_cli/etc/call_home_payload_schema.json</callhome.schema-url>
             </properties>
         </profile>
 
