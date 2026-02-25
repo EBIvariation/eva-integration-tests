@@ -42,7 +42,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         self.setup_test_data_for_metadata_json_from_webservice()
 
         log_file = f'{self.container_eload_dir}/prepare.out'
-        self.container_log_files.append(self.container_name, log_file)
+        self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submission_id {self.submission_id} --eload 1 > {log_file} 2>&1"

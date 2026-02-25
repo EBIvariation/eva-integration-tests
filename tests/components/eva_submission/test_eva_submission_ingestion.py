@@ -54,7 +54,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
 
     def test_ingestion_archive_only(self):
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
-        self.container_log_files.append(self.container_name, log_file)
+        self.container_log_files.append((self.container_name, log_file))
         ingestion_cmd = (
             f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks archive_only > {log_file} 2>&1'"
         )

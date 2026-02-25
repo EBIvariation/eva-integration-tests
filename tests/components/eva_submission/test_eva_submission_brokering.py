@@ -74,7 +74,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number1}/broker.out'
-        self.container_log_files.append(self.container_name, log_file)
+        self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
             f"docker exec {self.container_name} sh -c 'broker_submission.py --eload {self.eload_number1} > {log_file} 2>&1'"
         )
@@ -92,7 +92,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
 
     def test_submission_with_old_metadata_spreadsheet(self):
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number2}/broker.out'
-        self.container_log_files.append(self.container_name, log_file)
+        self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
             f"docker exec {self.container_name} sh -c 'broker_submission.py --eload {self.eload_number2} > {log_file} 2>&1'"
         )
@@ -110,7 +110,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
 
     def test_submission_with_existing_project(self):
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number3}/broker.out'
-        self.container_log_files.append(self.container_name, log_file)
+        self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
             f"docker exec {self.container_name} sh -c 'broker_submission.py --eload {self.eload_number3} --project_accession PRJEB12770 > {log_file} 2>&1'"
         )
@@ -141,7 +141,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number4}/broker.out'
-        self.container_log_files.append(self.container_name, log_file)
+        self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
             f"docker exec {self.container_name} sh -c 'broker_submission.py --eload {self.eload_number4} --output_format xml > {log_file} 2>&1'"
         )
