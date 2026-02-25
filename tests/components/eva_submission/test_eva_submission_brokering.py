@@ -7,7 +7,7 @@ from ebi_eva_common_pyutils.config import Configuration
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionBrokering(TestWithDockerCompose):
@@ -59,6 +59,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
 
+    @log_on_failure
     def test_submission_with_new_metadata_spreadsheet(self):
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number1}"
@@ -90,6 +91,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         self.assert_brokering_pass_in_config(
             os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}', f'.ELOAD_{self.eload_number1}_config.yml'))
 
+    @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number2}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
@@ -108,6 +110,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         self.assert_brokering_pass_in_config(
             os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number2}', f'.ELOAD_{self.eload_number2}_config.yml'))
 
+    @log_on_failure
     def test_submission_with_existing_project(self):
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number3}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
@@ -126,6 +129,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         self.assert_brokering_pass_in_config(
             os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number3}', f'.ELOAD_{self.eload_number3}_config.yml'))
 
+    @log_on_failure
     def test_submission_with_ena_xml(self):
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number4}"

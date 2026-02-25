@@ -6,7 +6,7 @@ from ebi_eva_common_pyutils.config import Configuration
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionValidation(TestWithDockerCompose):
@@ -38,6 +38,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         self.eload_number = 1
 
+    @log_on_failure
     def test_submission_with_new_metadata_spreadsheet(self):
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number}"
@@ -64,6 +65,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
 
+    @log_on_failure
     def test_validation_with_tasks(self):
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 "

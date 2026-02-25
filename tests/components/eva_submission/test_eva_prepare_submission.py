@@ -6,7 +6,7 @@ from ebi_eva_internal_pyutils.pg_utils import execute_query
 
 from utils.docker_utils import copy_files_to_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionPreparation(TestWithDockerCompose):
@@ -27,16 +27,20 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         super().setUp()
         self.container_log_files = []
 
+    @log_on_failure
     def test_prepare_submission_metadata_spreadsheet(self):
         # copy all required file into container
         self.setup_test_data_for_metadata_spreadsheet()
 
+        log_file = f'{self.container_eload_dir}/prepare.out'
+        self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload 1"
+            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload 1 > {log_file} 2>&1"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata spreadsheet", prepare_cmd)
 
+    @log_on_failure
     def test_prepare_submission_metadata_json_from_webservice(self):
         # copy all required file into container
         self.setup_test_data_for_metadata_json_from_webservice()

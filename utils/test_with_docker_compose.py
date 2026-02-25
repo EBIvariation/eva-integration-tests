@@ -1,9 +1,85 @@
+import functools
 import os
 import shutil
 from unittest import TestCase
 
 from utils.docker_utils import build_from_docker_compose, \
     stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose, read_file_from_container
+
+
+def _dump_logs(test_instance):
+    if test_instance.container_log_files:
+        for container_name, log_file in test_instance.container_log_files:
+            try:
+                output = read_file_from_container(container_name, log_file)
+                print('Log file: ' + log_file)
+                print(output)
+            except Exception as e:
+                print(f'Failed to read log {log_file} file from {container_name}')
+                print(str(e))
+
+
+class log_on_failure:
+    """Print container log files when an exception is raised.
+
+    As a class-level decorator (test instance extracted from first arg at call time):
+        @log_on_failure
+        def assert_something(self, ...):
+            ...
+
+    As a context manager inside a test:
+        with log_on_failure(self):
+            ...
+
+    As a decorator with an explicit test instance:
+        @log_on_failure(self)
+        def assert_something():
+            ...
+    """
+
+    def __init__(self, test_instance_or_func):
+        if callable(test_instance_or_func) and not isinstance(test_instance_or_func, TestWithDockerCompose):
+            # @log_on_failure — receives the function to wrap
+            self._func = test_instance_or_func
+            self._test_instance = None
+            functools.update_wrapper(self, test_instance_or_func)
+        else:
+            # log_on_failure(self) — receives the TestWithDockerCompose instance
+            self._func = None
+            self._test_instance = test_instance_or_func
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        return functools.partial(self, obj)
+
+    def __call__(self, *args, **kwargs):
+        if self._func is not None:
+            # Invoked as the wrapped method by the test runner; extract test instance from first arg
+            test_self = args[0]
+            try:
+                return self._func(*args, **kwargs)
+            except Exception:
+                _dump_logs(test_self)
+                raise
+        # @LogOnFailure(self) — being applied as a decorator to a function
+        func = args[0]
+        test_instance = self._test_instance
+        def wrapper(*w_args, **w_kwargs):
+            try:
+                return func(*w_args, **w_kwargs)
+            except Exception:
+                _dump_logs(test_instance)
+                raise
+        return wrapper
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            _dump_logs(self._test_instance)
+        return False
 
 
 class TestWithDockerCompose(TestCase):
@@ -45,22 +121,3 @@ class TestWithDockerCompose(TestCase):
 
         # stop and remove container
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
-
-    @staticmethod
-    def safe_assert(assert_function):
-        def wrapper(self, *args, **kwargs):
-            try:
-                assert_function(self, *args, **kwargs)
-            except Exception as original_exception:
-                # Show the log files to get a better description of what happened
-                if self.container_log_files:
-                    for container_name, log_file in self.container_log_files:
-                        try:
-                            output = read_file_from_container(container_name, log_file)
-                            print('Log file: ' + log_file)
-                            print(output)
-                        except Exception as e:
-                            print(f'Failed to read log {log_file} file from {container_name}')
-                            print(str(e))
-                raise original_exception
-        return wrapper
