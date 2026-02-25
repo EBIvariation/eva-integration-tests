@@ -26,6 +26,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
     def setUp(self):
         super().setUp()
+        self.container_log_files = []
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),

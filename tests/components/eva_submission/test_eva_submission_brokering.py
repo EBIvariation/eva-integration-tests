@@ -33,6 +33,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         if not self.webin_username or not self.webin_password:
             self.fail('EVA_SUBMISSION_WEBIN_USERNAME or EVA_SUBMISSION_WEBIN_PASSWORD not set')
         super().setUp()
+        self.container_log_files = []
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),

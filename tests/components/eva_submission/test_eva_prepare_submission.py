@@ -25,6 +25,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
 
     def setUp(self):
         super().setUp()
+        self.container_log_files = []
 
     def test_prepare_submission_metadata_spreadsheet(self):
         # copy all required file into container
