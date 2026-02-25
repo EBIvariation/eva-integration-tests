@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+from tempfile import mktemp, mkstemp
 
 from ebi_eva_common_pyutils.logger import logging_config
 
@@ -9,11 +10,14 @@ from utils.test_utils import run_quiet_command
 logger = logging_config.get_logger(__name__)
 
 def run_docker_cmd(description, command):
-    output = None
+    log_file = None
     try:
-        output = run_quiet_command(description, command, log_error_stream_to_output=True, return_process_output=True)
+        log_file = mkstemp()
+        command_with_log = f'{command} > {log_file} 2>&1'
+        run_quiet_command(description, command_with_log, log_error_stream_to_output=True)
     except subprocess.CalledProcessError as e:
-        if output:
+        if log_file:
+            output = read_file_from_local(log_file)
             print(f'Command {command} {description} failed:')
             print(output)
         raise e
@@ -53,8 +57,8 @@ def read_file_from_container(container_name, file_path, docker_path='docker'):
                              return_process_output=True)
 
 def read_file_from_local(file_path):
-    return run_quiet_command("read content of the file", f"cat {file_path}",
-                             return_process_output=True)
+    with open(file_path) as f:
+        return f.read()
 
 def run_command_in_container(container_name, command_to_run, docker_path='docker'):
     return run_quiet_command("run command in container",
