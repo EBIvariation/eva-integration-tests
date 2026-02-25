@@ -1,7 +1,8 @@
 import os
 import re
+import shutil
 import subprocess
-from tempfile import mktemp, mkstemp
+from tempfile import mktemp, mkstemp, mkdtemp
 
 from ebi_eva_common_pyutils.logger import logging_config
 
@@ -11,8 +12,10 @@ logger = logging_config.get_logger(__name__)
 
 def run_docker_cmd(description, command):
     log_file = None
+    log_dir = None
     try:
-        log_file = mkstemp()
+        log_dir = mkdtemp()
+        log_file = os.path.join(log_dir, "docker-log")
         command_with_log = f'{command} > {log_file} 2>&1'
         run_quiet_command(description, command_with_log, log_error_stream_to_output=True)
     except subprocess.CalledProcessError as e:
@@ -21,6 +24,9 @@ def run_docker_cmd(description, command):
             print(f'Command {command} {description} failed:')
             print(output)
         raise e
+    finally:
+        if os.path.exists(log_dir):
+            shutil.rmtree(log_dir)
 
 
 def build_from_docker_compose(docker_compose_file, docker_path='docker'):
