@@ -12,6 +12,7 @@ from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 class TestEvaSubCliValidation(TestEvaSubCli):
 
+    @log_on_failure
     def test_native_validator_with_json(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_validation_json_metadata()
@@ -37,6 +38,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_json, executor='native')
 
+    @log_on_failure
     def test_native_validator_with_xlsx(self):
         # create metadata xlsx file and copy to container
         shutil.copyfile(
@@ -63,6 +65,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_xlsx, executor='native')
 
+    @log_on_failure
     def test_native_validator_with_tasks(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_validation_json_metadata()
@@ -88,6 +91,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
         self.assert_partial_validation_results(self.get_expected_sample(), self.get_expected_metadata_files_json(),
                                                'Validation passed successfully.', self.get_expected_semantic_val())
 
+    @log_on_failure
     def test_docker_validator_with_json(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_validation_json_metadata()
@@ -114,6 +118,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_json, executor='docker')
 
+    @log_on_failure
     def test_docker_validator_with_json_existing_project(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_validation_json_metadata_existing_project()
@@ -140,6 +145,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_json, executor='docker')
 
+    @log_on_failure
     def test_docker_validator_with_json_containing_non_vcf_files(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_validation_json_metadata_with_non_vcf_file()
@@ -166,6 +172,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_json, executor='docker')
 
+    @log_on_failure
     def test_docker_validator_with_xlsx(self):
         # create metadata xlsx file and copy to container
         shutil.copyfile(
@@ -192,6 +199,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_xlsx, executor='docker')
 
+    @log_on_failure
     def test_docker_validator_with_xlsx_existing_project(self):
         # create metadata xlsx file and copy to container
         shutil.copyfile(
@@ -219,6 +227,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        'Validation passed successfully.', self.get_expected_semantic_val(),
                                        self.metadata_xlsx, executor='docker')
 
+    @log_on_failure
     def test_docker_validator_with_xlsx_non_vcf_files(self):
         # create metadata xlsx file and copy to container
         shutil.copyfile(
@@ -273,7 +282,6 @@ class TestEvaSubCliValidation(TestEvaSubCli):
             }
         }
 
-    @log_on_failure
     def assert_validation_results(self, expected_sample_checker, expected_metadata_files_json,
                                   expected_metadata_val, expected_semantic_val, metadata_type, executor):
         validation_output_dir = self.test_run_dir
