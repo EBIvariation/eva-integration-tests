@@ -4,7 +4,7 @@ import os
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import execute_query
 
-from utils.docker_utils import copy_files_to_container
+from utils.docker_utils import copy_files_to_container, run_docker_cmd
 from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
@@ -55,6 +55,8 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
 
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
+        run_docker_cmd(f"Create directory structure for copying files into container",
+                       f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
         copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
         copy_files_to_container(self.container_name, self.container_submission_dir,
                                 os.path.join(self.resources_directory, 'metadata_files',
