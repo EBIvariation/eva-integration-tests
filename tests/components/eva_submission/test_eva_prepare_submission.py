@@ -36,7 +36,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload 1 > {log_file} 2>&1"
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submitter username --ftp_box 1 --eload 1 > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata spreadsheet", prepare_cmd)
 
@@ -49,13 +49,13 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} prepare_submission.py --submission_id {self.submission_id} --eload 1 > {log_file} 2>&1"
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submission_id {self.submission_id} --eload 1 > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata json from webservice", prepare_cmd)
 
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
-        run_docker_cmd(f"Create directory structure for copying files into container",
+        run_docker_cmd(f"Create submission directory in container",
                        f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
         copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
         copy_files_to_container(self.container_name, self.container_submission_dir,
@@ -65,6 +65,8 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
     def setup_test_data_for_metadata_json_from_webservice(self):
         # copy vcf file to the correct dir in container
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
+        run_docker_cmd(f"Create submission directory in container",
+                       f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
         copy_files_to_container(self.container_name, self.container_submission_dir_json_webservice, vcf_file)
 
         # insert data in eva-submission-ws tables
