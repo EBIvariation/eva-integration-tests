@@ -10,10 +10,12 @@ from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 from tests.components.eva_sub_cli.test_eva_sub_cli import TestEvaSubCli
 from utils.docker_utils import copy_files_to_container, read_file_from_container
 from utils.test_utils import run_quiet_command
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubCliSubmission(TestEvaSubCli):
 
+    @log_on_failure
     def test_submission(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_submission_json_metadata()
@@ -41,6 +43,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
         # assert submission result
         self.assert_submission_results(webin_account, webin_email)
 
+    @log_on_failure
     def test_submission_to_existing_project(self):
         # create metadata json file and copy to container
         sub_metadata = self.get_submission_json_metadata_existing_project()

@@ -6,7 +6,7 @@ from ebi_eva_common_pyutils.config import Configuration
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionValidation(TestWithDockerCompose):
@@ -26,6 +26,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
     def setUp(self):
         super().setUp()
+        self.container_log_files = []
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
@@ -37,6 +38,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         self.eload_number = 1
 
+    @log_on_failure
     def test_submission_with_new_metadata_spreadsheet(self):
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number}"
@@ -44,9 +46,11 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
-        self.log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
+
+        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
+        self.container_log_files.append((self.container_name, log_file))
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {self.log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {log_file} 2>&1'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
@@ -61,6 +65,7 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
 
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
 
+    @log_on_failure
     def test_validation_with_tasks(self):
         prepare_cmd = (
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 "

@@ -26,7 +26,11 @@ class TestEvaSubCli(TestWithDockerCompose):
     docker_compose_file = os.path.join(root_dir, 'components', 'docker-compose-eva-sub-cli.yml')
     container_name = 'eva_sub_cli_test'
     container_submission_dir = '/opt'
-    log_file = os.path.join(container_submission_dir, 'eva_submission.log')
+    submission_log_file = os.path.join(container_submission_dir, 'eva_submission.log')
+    container_log_files = [
+        (container_name, submission_log_file),
+        ('eva_submission_ws_test', '/usr/local/software/logs/eva-submission-ws/eva-submission-ws.log'),
+    ]
 
     webin_test_user = WebinTestUser()
 

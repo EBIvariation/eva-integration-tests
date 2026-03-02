@@ -4,9 +4,9 @@ import os
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import execute_query
 
-from utils.docker_utils import copy_files_to_container
+from utils.docker_utils import copy_files_to_container, run_docker_cmd
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionPreparation(TestWithDockerCompose):
@@ -25,29 +25,38 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
 
     def setUp(self):
         super().setUp()
+        self.container_log_files = []
 
+    @log_on_failure
     def test_prepare_submission_metadata_spreadsheet(self):
         # copy all required file into container
         self.setup_test_data_for_metadata_spreadsheet()
 
+        log_file = f'{self.container_eload_dir}/prepare.out'
+        self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload 1"
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submitter username --ftp_box 1 --eload 1 > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata spreadsheet", prepare_cmd)
 
+    @log_on_failure
     def test_prepare_submission_metadata_json_from_webservice(self):
         # copy all required file into container
         self.setup_test_data_for_metadata_json_from_webservice()
 
+        log_file = f'{self.container_eload_dir}/prepare.out'
+        self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} prepare_submission.py --submission_id {self.submission_id} --eload 1"
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submission_id {self.submission_id} --eload 1 > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata json from webservice", prepare_cmd)
 
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
+        run_docker_cmd(f"Create submission directory in container",
+                       f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
         copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
         copy_files_to_container(self.container_name, self.container_submission_dir,
                                 os.path.join(self.resources_directory, 'metadata_files',
@@ -56,6 +65,8 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
     def setup_test_data_for_metadata_json_from_webservice(self):
         # copy vcf file to the correct dir in container
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
+        run_docker_cmd(f"Create submission directory in container",
+                       f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
         copy_files_to_container(self.container_name, self.container_submission_dir_json_webservice, vcf_file)
 
         # insert data in eva-submission-ws tables
