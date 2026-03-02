@@ -833,3 +833,12 @@ CREATE TABLE evapro.clustered_variant_update (
 
 ALTER TABLE evapro.clustered_variant_update OWNER TO metadata_db_user;
 GRANT ALL ON TABLE evapro.clustered_variant_update TO metadata_db_user;
+
+CREATE OR REPLACE VIEW evapro.assembly AS
+    SELECT aa.assembly_accession,
+           aset.assembly_code,
+           aset.assembly_name,
+           aset.taxonomy_id
+    FROM evapro.accessioned_assembly aa
+    JOIN evapro.assembly_set aset ON aa.assembly_set_id = aset.assembly_set_id;
+GRANT SELECT ON evapro.assembly TO metadata_db_user;
