@@ -1,6 +1,8 @@
 ftp_dir: /opt/ftp/private/
 public_ftp_dir: /opt/ftp/public/
 
+opencga_path: /opt/opencga
+
 eloads_dir: /opt/submissions/
 
 eloads_lts_dir: ''
@@ -71,3 +73,7 @@ submissions:
     url: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1
     admin_username: eva-submission-ws-admin-user
     admin_password: eva-submission-ws-admin-pass
+
+jar:
+  deprecate: /opt/jars/eva-accession-deprecate.jar
+  eva_pipeline: /opt/jars/eva-pipeline.jar
