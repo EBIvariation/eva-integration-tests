@@ -25,7 +25,7 @@ maven:
 
 executable:
   eva_sub_cli: eva-sub-cli.py
-  sub_cli_env: /root/.bashrc
+  sub_cli_env: /dev/null
   nextflow: /usr/local/bin/nextflow
   vcf_assembly_checker: /usr/local/bin/vcf_assembly_checker
   vcf_validator: /usr/local/bin/vcf_validator
