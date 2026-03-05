@@ -1,11 +1,15 @@
 import os
+from datetime import datetime, timezone
 
+from bson import Int64
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
+from pymongo.errors import BulkWriteError
 
 from utils.docker_utils import copy_files_to_container, run_command_in_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose
+from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionDeprecation(TestWithDockerCompose):
@@ -30,6 +34,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     def setUp(self):
         super().setUp()
         self._seed_evapro()
+        self._seed_mongodb()
         self._create_accession_report()
         self.container_log_files = []
         run_command_in_container(self.container_name, f'mkdir -p {self.container_output_dir}')
@@ -101,6 +106,83 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
             )
             execute_query(conn, "REFRESH MATERIALIZED VIEW evapro.study_browser")
 
+    @staticmethod
+    def _insert_many_ignore_duplicates(collection, documents):
+        """Insert documents into a collection, ignoring duplicate key errors."""
+        try:
+            collection.insert_many(documents, ordered=False)
+        except BulkWriteError as e:
+            if any(err['code'] != 11000 for err in e.details.get('writeErrors', [])):
+                raise
+
+    def _seed_mongodb(self):
+        """Insert MongoDB documents needed by deprecation tests."""
+        created_date = datetime(2021, 4, 28, 16, 32, 11, 168000, tzinfo=timezone.utc)
+        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+            self._insert_many_ignore_duplicates(
+                mongo_conn['eva_accession_sharded']['submittedVariantEntity'],
+                [
+                    {
+                        '_id': 'A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2',
+                        'seq': 'GCA_000004515.4', 'tax': 3847, 'study': 'PRJEB12345',
+                        'contig': 'CM000834.3', 'start': Int64(315),
+                        'ref': 'G', 'alt': 'C',
+                        'accession': Int64(100000001), 'version': 1, 'createdDate': created_date
+                    },
+                    {
+                        '_id': 'B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3',
+                        'seq': 'GCA_000004515.4', 'tax': 3847, 'study': 'PRJEB12345',
+                        'contig': 'CM000834.3', 'start': Int64(420),
+                        'ref': 'A', 'alt': 'T',
+                        'accession': Int64(100000002), 'version': 1, 'createdDate': created_date
+                    },
+                    {
+                        '_id': 'C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4',
+                        'seq': 'GCA_000004515.4', 'tax': 3847, 'study': 'PRJEB12345',
+                        'contig': 'CM000834.3', 'start': Int64(530),
+                        'ref': 'T', 'alt': 'C',
+                        'accession': Int64(100000003), 'version': 1, 'createdDate': created_date
+                    },
+                ]
+            )
+
+            variant_db = mongo_conn['eva_glycine_max_v2']
+            self._insert_many_ignore_duplicates(
+                variant_db['variants_2_0'],
+                [
+                    {
+                        '_id': 'CM000834.3_315_G_C',
+                        'chr': 'CM000834.3', 'start': 315,
+                        '_at': {'chunkIds': ['CM000834.3_0_1k', 'CM000834.3_0_10k']},
+                        'alt': 'C', 'end': 315,
+                        'files': [{
+                            'fid': 'ERZ99999', 'sid': 'PRJEB12345',
+                            'attrs': {'QUAL': '100', 'AC': '1', 'AF': '0.5', 'AN': '2'},
+                            'fm': 'GT', 'samp': {'def': '0/1'}
+                        }],
+                        'hgvs': [{'type': 'genomic', 'name': 'CM000834.3:g.315G>C'}],
+                        'len': 1, 'ref': 'G', 'type': 'SNV', 'annot': []
+                    },
+                    {
+                        '_id': 'CM000834.3_420_A_T',
+                        'chr': 'CM000834.3', 'start': 420,
+                        '_at': {'chunkIds': ['CM000834.3_0_1k', 'CM000834.3_0_10k']},
+                        'alt': 'T', 'end': 420,
+                        'files': [{
+                            'fid': 'ERZ99999', 'sid': 'PRJEB12345',
+                            'attrs': {'QUAL': '100', 'AC': '1', 'AF': '0.5', 'AN': '2'},
+                            'fm': 'GT', 'samp': {'def': '0/1'}
+                        }],
+                        'hgvs': [{'type': 'genomic', 'name': 'CM000834.3:g.420A>T'}],
+                        'len': 1, 'ref': 'A', 'type': 'SNV', 'annot': []
+                    },
+                ]
+            )
+            self._insert_many_ignore_duplicates(
+                variant_db['files_2_0'],
+                [{'sid': 'PRJEB12345', 'fid': 'ERZ99999', 'fname': 'test_sample.vcf.gz'}]
+            )
+
     def _create_accession_report(self):
         """Write a minimal accessioned VCF to test_run_dir, copy to container, bgzip."""
         local_vcf = os.path.join(self.test_run_dir, 'test_sample.accessioned.vcf')
@@ -134,6 +216,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         )
         run_quiet_command('run deprecate_study.py', cmd)
 
+    @log_on_failure
     def test_deprecate_mark_inactive(self):
         self._run_deprecate('mark_inactive')
 
@@ -163,6 +246,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
             assert results == [], \
                 f"Expected PRJEB12345 absent from study_browser, got {results}"
 
+    @log_on_failure
     def test_deprecate_variants(self):
         assemblies_arg = (
             f'--assemblies_accession_reports '
@@ -181,6 +265,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         assert result is not None and result.strip() == '3', \
             f"Expected 3 deprecated submittedVariantEntity documents, got: {result}"
 
+    @log_on_failure
     def test_deprecate_drop_study(self):
         assemblies_arg = (
             f'--assemblies_accession_reports '

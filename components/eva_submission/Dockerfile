@@ -5,7 +5,7 @@ ARG SOURCE_GITHUB_REF
 ARG SOURCE_GITHUB_SHA
 
 ENV vcf_validator_version=0.9.4
-ENV NXF_VER=21.10.5
+ENV NXF_VER=22.04.0
 ENV MONGOSH_VERSION=2.7.0
 
 
@@ -56,7 +56,7 @@ RUN pip3 install gyp-next \
     && npm link
 
 # Install nextflow
-RUN curl -L "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
+RUN curl -L  "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
     && mv nextflow /usr/local/bin/
 
 
