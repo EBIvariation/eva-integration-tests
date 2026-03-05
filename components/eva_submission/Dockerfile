@@ -90,6 +90,7 @@ RUN cp eva-accession/eva-accession-pipeline/target/eva-accession-pipeline-*-exec
 RUN cp eva-accession/eva-accession-clustering/target/eva-accession-clustering-*-exec.jar /usr/local/software/eva-accession-clustering.jar
 RUN cp eva-accession/eva-remapping-get-source/target/eva-remapping-get-source-*-exec.jar /usr/local/software/eva-remapping-get-source.jar
 RUN cp eva-accession/eva-remapping-ingest/target/eva-remapping-ingest-*-exec.jar /usr/local/software/eva-remapping-ingest.jar
+RUN cp eva-accession/eva-accession-deprecate/target/eva-accession-deprecate-*-exec.jar /usr/local/software/eva-accession-deprecate.jar
 
 # setup eva-pipeline
 RUN git clone --single-branch https://github.com/EBIvariation/eva-pipeline.git
