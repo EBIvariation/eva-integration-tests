@@ -112,8 +112,7 @@ services:
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "mongosh --quiet --port 27017 --eval \"db.adminCommand({ listShards: 1 }).ok\" | grep 1"
+          "CMD", "mongosh", "--eval", "db.adminCommand('ping')"
         ]
       interval: 10s
       timeout: 5s
