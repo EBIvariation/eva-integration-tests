@@ -119,6 +119,8 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         """Insert MongoDB documents needed by deprecation tests."""
         created_date = datetime(2021, 4, 28, 16, 32, 11, 168000, tzinfo=timezone.utc)
         with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+            mongo_conn.admin.command({"enableSharding": 'eva_accession_sharded'})
+            mongo_conn.admin.command({'shardCollection': 'eva_accession_sharded.submittedVariantEntity', 'key':{'_id': 1}})
             self._insert_many_ignore_duplicates(
                 mongo_conn['eva_accession_sharded']['submittedVariantEntity'],
                 [
@@ -145,7 +147,8 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
                     },
                 ]
             )
-
+            mongo_conn.admin.command({"enableSharding": 'eva_glycine_max_v2'})
+            mongo_conn.admin.command({'shardCollection': 'eva_glycine_max_v2.variants_2_0', 'key':{'chr': 1, 'start': 1}})
             variant_db = mongo_conn['eva_glycine_max_v2']
             self._insert_many_ignore_duplicates(
                 variant_db['variants_2_0'],
