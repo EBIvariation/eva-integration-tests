@@ -137,10 +137,10 @@ class TestWithDockerCompose(TestCase):
             shutil.rmtree(self.test_run_dir)
         os.makedirs(self.test_run_dir, exist_ok=True)
 
-    def tearDown(self):
-        # delete test run directory
-        if os.path.exists(self.test_run_dir):
-            shutil.rmtree(self.test_run_dir)
-
-        # stop and remove container
-        stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
+    # def tearDown(self):
+    #     # delete test run directory
+    #     if os.path.exists(self.test_run_dir):
+    #         shutil.rmtree(self.test_run_dir)
+    #
+    #     # stop and remove container
+    #     stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
