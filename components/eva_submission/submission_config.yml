@@ -1,8 +1,6 @@
 ftp_dir: /opt/ftp/private/
 public_ftp_dir: /opt/ftp/public/
 
-opencga_path: /opt/opencga
-
 eloads_dir: /opt/submissions/
 
 eloads_lts_dir: ''
