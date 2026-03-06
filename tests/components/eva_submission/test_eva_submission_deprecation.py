@@ -252,8 +252,10 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     @log_on_failure
     def test_deprecate_variants(self):
         deprecation_log_file  = (f'{self.container_output_dir}/'
-                                 f'deprecate.{self.container_accession_report}_{self.assembly_accession}.log')
+                                 f'deprecate.{os.path.basename(self.container_accession_report)}_{self.assembly_accession}.log')
         self.container_log_files.append((self.container_name, deprecation_log_file))
+        deprecation_properties = f'{self.container_output_dir}/variant_deprecation.properties'
+        self.container_log_files.append((self.container_name, deprecation_properties))
         assemblies_arg = (
             f'--assemblies_accession_reports '
             f'{self.assembly_accession}={self.container_accession_report}'
@@ -277,6 +279,8 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         drop_study_log_file = (f'{self.container_output_dir}/'
                                 f'drop_study.{db_name}_{self.project_accession}.log')
         self.container_log_files.append((self.container_name, drop_study_log_file))
+        drop_study_properties = f'{self.container_output_dir}/drop_study.properties'
+        self.container_log_files.append((self.container_name, drop_study_properties))
         assemblies_arg = (
             f'--assemblies_accession_reports '
             f'{self.assembly_accession}={self.container_accession_report}'
