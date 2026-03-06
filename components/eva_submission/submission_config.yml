@@ -10,13 +10,22 @@ eutils_api_key: ''
 genome_downloader:
   output_directory: /opt/reference_sequences
 
+mongodb:
+  mongo_admin_uri: mongodb://mongo_db:27017/admin
+  mongo_admin_secrets_file: /root/.mongo_admin_prod_pass
+
+vep_path: /usr/local/software/vep
+vep_cache_path: /opt/datasources/vep-cache
+
+opencga_path: /opt/software/vep/opencga
+
 maven:
   environment: docker
   settings_file: /root/maven-settings.xml
 
 executable:
   eva_sub_cli: eva-sub-cli.py
-  sub_cli_env: /root/.bashrc
+  sub_cli_env: /dev/null
   nextflow: /usr/local/bin/nextflow
   vcf_assembly_checker: /usr/local/bin/vcf_assembly_checker
   vcf_validator: /usr/local/bin/vcf_validator
@@ -31,6 +40,14 @@ executable:
   python:
     interpreter: python
 
+jar:
+  eva_pipeline: /usr/local/software/eva-pipeline.jar
+  accession_pipeline: /usr/local/software/eva-accession-pipeline.jar
+  clustering: /usr/local/software/eva-accession-clustering.jar
+  vcf_extractor: /usr/local/software/eva-remapping-get-source.jar
+  vcf_ingestion: /usr/local/software/eva-remapping-ingest.jar
+  deprecate: /usr/local/software/eva-accession-deprecate.jar
+
 biosamples:
   bsd_url: https://wwwdev.ebi.ac.uk/biosamples
   webin_url: https://wwwdev.ebi.ac.uk/ena/submit/webin/auth/token
@@ -39,6 +56,9 @@ ena:
   submit_url: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit
   submit_async: https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/queue
   ftphost: webin.ebi.ac.uk
+  webin_v1_url: http://mock-ws:8080/mocked_web_services/mocked_ena/mocked_hold_date/
+  username: mocked_web_services_user
+  password: mocked_web_services_pass
   ERA:
     username: oracle_user
     password: oracle_pass

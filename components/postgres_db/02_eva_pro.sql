@@ -100,21 +100,6 @@ CREATE TABLE evapro.eva_submission_status_cv (
 ALTER TABLE evapro.eva_submission_status_cv OWNER TO metadata_db_user;
 GRANT ALL ON TABLE evapro.eva_submission_status_cv TO metadata_db_user;
 
--- Inserts for eva_submission_status_cv
-INSERT INTO evapro.eva_submission_status_cv (eva_submission_status_id, submission_status, description)
-VALUES (-1,'Submission Private','The submission is private at EVA (e.g. hide parent project)'),
-        (0,'Submission Defined','A submission has been initiated, but not files yet received'),
-       (1,'Files Received','EVA has receieved the submission files'),
-       (2,'VCF File Valid','The VCF files are technically valid'),
-       (3,'Meta-data Valid','The required meta-data is complete and correct'),
-       (4,'ENA Project Accession Assigned','A project accession has be assigned by ENA'),
-       (5,'File submitted to ENA','The VCF files have been submitted to ENA'),
-       (6,'ENA Submission Complete','The ENA submission is complete'),
-       (7,'EVA Processing Started','The files have started to be processed by EVA'),
-       (8,'EVA Processing Complete','The files have completed processing by EVA'),
-       (9,'Mongo Loading Started','The data is loading to MongoDB'),
-       (10,'Submission Live','The submission is live and public at EVA');
-
 
 --- table (eva_submission)
 CREATE TABLE evapro.eva_submission (
@@ -214,6 +199,53 @@ ALTER TABLE evapro.accessioned_assembly OWNER TO metadata_db_user;
 GRANT ALL ON TABLE evapro.accessioned_assembly TO metadata_db_user;
 
 ALTER TABLE evapro.accessioned_assembly ADD CONSTRAINT acc_assembly_sid_fk FOREIGN KEY (assembly_set_id) REFERENCES evapro.assembly_set(assembly_set_id);
+
+
+--- view (custom_assembly)
+CREATE TABLE evapro.custom_assembly (
+	assembly_set_id int4 NOT NULL,
+	assembly_location varchar(250) NOT NULL,
+	assembly_file_name varchar(250) NOT NULL,
+	CONSTRAINT assembly_loc_file_pkey PRIMARY KEY (assembly_location, assembly_file_name),
+	CONSTRAINT custom_assembly_assembly_set_id_key UNIQUE (assembly_set_id)
+);
+
+ALTER TABLE evapro.custom_assembly OWNER TO metadata_db_user;
+GRANT ALL ON TABLE evapro.custom_assembly TO metadata_db_user;
+
+ALTER TABLE evapro.custom_assembly ADD CONSTRAINT cust_assembly_sid_fkey FOREIGN KEY (assembly_set_id) REFERENCES evapro.assembly_set(assembly_set_id);
+
+
+--- view (assembly_accessioning_store_status)
+CREATE TABLE evapro.assembly_accessioning_store_status (
+	assembly_accession varchar(25) NOT NULL,
+	assembly_in_accessioning_store bool NULL,
+	CONSTRAINT assembly_accessioning_store_status_assembly_accession_key UNIQUE (assembly_accession)
+);
+
+ALTER TABLE evapro.assembly_accessioning_store_status OWNER TO metadata_db_user;
+GRANT ALL ON TABLE evapro.assembly_accessioning_store_status TO metadata_db_user;
+
+
+--- view (assembly)
+CREATE OR REPLACE VIEW evapro.assembly
+AS SELECT accessioned_assembly.assembly_accession,
+    accessioned_assembly.assembly_chain,
+    accessioned_assembly.assembly_version,
+    assembly_set.assembly_set_id,
+    assembly_set.assembly_name,
+    assembly_set.assembly_code,
+    assembly_set.taxonomy_id,
+    custom_assembly.assembly_location,
+    custom_assembly.assembly_file_name AS assembly_filename,
+    assembly_accessioning_store_status.assembly_in_accessioning_store
+   FROM evapro.assembly_set
+     LEFT JOIN evapro.accessioned_assembly USING (assembly_set_id)
+     LEFT JOIN evapro.custom_assembly USING (assembly_set_id)
+     LEFT JOIN evapro.assembly_accessioning_store_status USING (assembly_accession);
+
+ALTER TABLE evapro.assembly OWNER TO metadata_db_user;
+GRANT ALL ON TABLE evapro.assembly TO metadata_db_user;
 
 
 --- table (analysis)
@@ -338,12 +370,6 @@ CREATE TABLE evapro.file_class_cv (
 
 ALTER TABLE evapro.file_class_cv OWNER TO metadata_db_user;
 GRANT ALL ON TABLE evapro.file_class_cv TO metadata_db_user;
-
---- Inserts for file_class_cv
-INSERT INTO evapro.file_class_cv (file_class_id, file_class) VALUES(1, 'submitted');
-INSERT INTO evapro.file_class_cv (file_class_id, file_class) VALUES(2, 'eva_brokered');
-INSERT INTO evapro.file_class_cv (file_class_id, file_class) VALUES(3, 'eva_value_added');
-INSERT INTO evapro.file_class_cv (file_class_id, file_class) VALUES(4, 'fixed_for_eva');
 
 
 --- table (file)
@@ -795,7 +821,7 @@ ALTER TABLE evapro.study_browser OWNER TO metadata_db_user;
 GRANT ALL ON TABLE evapro.study_browser TO metadata_db_user;
 
 
---- view (clustered_variant_update)
+--- table (clustered_variant_update)
 CREATE TABLE evapro.clustered_variant_update (
         clustered_update_id INTEGER NOT NULL,
         taxonomy_id INTEGER NOT NULL,
