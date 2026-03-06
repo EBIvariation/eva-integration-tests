@@ -251,6 +251,9 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
 
     @log_on_failure
     def test_deprecate_variants(self):
+        deprecation_log_file  = (f'{self.container_output_dir}/'
+                                 f'deprecate.{self.container_accession_report}_{self.assembly_accession}.log')
+        self.container_log_files.append((self.container_name, deprecation_log_file))
         assemblies_arg = (
             f'--assemblies_accession_reports '
             f'{self.assembly_accession}={self.container_accession_report}'
@@ -270,6 +273,10 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
 
     @log_on_failure
     def test_deprecate_drop_study(self):
+        db_name = 'eva_glycine_max_v2'
+        drop_study_log_file = (f'{self.container_output_dir}/'
+                                f'drop_study.{db_name}_{self.project_accession}.log')
+        self.container_log_files.append((self.container_name, drop_study_log_file))
         assemblies_arg = (
             f'--assemblies_accession_reports '
             f'{self.assembly_accession}={self.container_accession_report}'
@@ -280,7 +287,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         variants_count = run_command_in_container(
             self.mongo_container_name,
             (
-                "mongosh --quiet eva_glycine_max_v2 --eval "
+                f"mongosh --quiet {db_name} --eval "
                 "\"db.variants_2_0.countDocuments({'files.sid': 'PRJEB12345'})\""
             )
         )
@@ -291,7 +298,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         files_count = run_command_in_container(
             self.mongo_container_name,
             (
-                "mongosh --quiet eva_glycine_max_v2 --eval "
+                f"mongosh --quiet {db_name} --eval "
                 "\"db.files_2_0.countDocuments({sid: 'PRJEB12345'})\""
             )
         )
