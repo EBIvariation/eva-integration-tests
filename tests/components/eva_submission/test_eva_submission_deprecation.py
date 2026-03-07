@@ -250,8 +250,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
 
     @log_on_failure
     def test_deprecate_variants(self):
-        deprecation_log_file  = (f'{self.container_output_dir}/'
-                                 f'deprecate.{os.path.basename(self.container_accession_report)}_{self.assembly_accession}.log')
+        deprecation_log_file  = f'{self.container_output_dir}/nextflow_output_*/*/*/.command.out'
         self.container_log_files.append((self.container_name, deprecation_log_file))
         deprecation_properties = f'{self.container_output_dir}/variant_deprecation.properties'
         self.container_log_files.append((self.container_name, deprecation_properties))
@@ -275,8 +274,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     @log_on_failure
     def test_deprecate_drop_study(self):
         db_name = 'eva_glycine_max_v2'
-        drop_study_log_file = (f'{self.container_output_dir}/'
-                                f'drop_study.{db_name}_{self.project_accession}.log')
+        drop_study_log_file  = f'{self.container_output_dir}/nextflow_output_*/*/*/.command.out'
         self.container_log_files.append((self.container_name, drop_study_log_file))
         drop_study_properties = f'{self.container_output_dir}/drop_study.properties'
         self.container_log_files.append((self.container_name, drop_study_properties))
