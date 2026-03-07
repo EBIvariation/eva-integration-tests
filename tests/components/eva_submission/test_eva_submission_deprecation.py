@@ -16,7 +16,6 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
                                        'docker-compose-eva-submission.yml')
     container_name = 'eva_submission_test'
-    mongo_container_name = 'mongo_db_test'
     container_eload_dir = '/opt/submissions'
     container_output_dir = '/opt/deprecation_output'
 
@@ -262,16 +261,12 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         )
         self._run_deprecate('deprecate_variants', extra_args=assemblies_arg)
 
-        # Verify via mongosh that all 3 submittedVariantEntity documents are deprecated
-        result = run_command_in_container(
-            self.mongo_container_name,
-            (
-                "mongosh --quiet eva_glycine_max_v2 --eval "
-                "\"db.submittedVariantEntity.countDocuments({study: 'PRJEB12345', accessioningStopped: true})\""
+        # Verify all 3 submittedVariantEntity documents are deprecated
+        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+            count = mongo_conn['eva_accession_sharded']['submittedVariantEntity'].count_documents(
+                {'study': 'PRJEB12345', 'accessioningStopped': True}
             )
-        )
-        assert result is not None and result.strip() == '3', \
-            f"Expected 3 deprecated submittedVariantEntity documents, got: {result}"
+        assert count == 3, f"Expected 3 deprecated submittedVariantEntity documents, got: {count}"
 
     @log_on_failure
     def test_deprecate_drop_study(self):
@@ -288,23 +283,12 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         self._run_deprecate('drop_study', extra_args=assemblies_arg)
 
         # Verify variants_2_0 no longer has PRJEB12345 (study ID is nested in files[].sid)
-        variants_count = run_command_in_container(
-            self.mongo_container_name,
-            (
-                f"mongosh --quiet {db_name} --eval "
-                "\"db.variants_2_0.countDocuments({'files.sid': 'PRJEB12345'})\""
-            )
-        )
-        assert variants_count is not None and variants_count.strip() == '0', \
+        # and files_2_0 no longer has PRJEB12345
+        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+            variant_db = mongo_conn[db_name]
+            variants_count = variant_db['variants_2_0'].count_documents({'files.sid': 'PRJEB12345'})
+            files_count = variant_db['files_2_0'].count_documents({'sid': 'PRJEB12345'})
+        assert variants_count == 0, \
             f"Expected 0 variants for PRJEB12345 in variants_2_0, got: {variants_count}"
-
-        # Verify files_2_0 no longer has PRJEB12345
-        files_count = run_command_in_container(
-            self.mongo_container_name,
-            (
-                f"mongosh --quiet {db_name} --eval "
-                "\"db.files_2_0.countDocuments({sid: 'PRJEB12345'})\""
-            )
-        )
-        assert files_count is not None and files_count.strip() == '0', \
+        assert files_count == 0, \
             f"Expected 0 files for PRJEB12345 in files_2_0, got: {files_count}"

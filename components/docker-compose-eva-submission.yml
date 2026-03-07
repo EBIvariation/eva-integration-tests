@@ -22,8 +22,27 @@ services:
         condition: service_healthy
       eva-submission-ws:
         condition: service_started
+      eva-ws:
+        condition: service_started
       mock-ws:
         condition: service_started
+    networks:
+      - eva_network
+
+  eva-ws:
+    image: eva_ws_test
+    build:
+      context: ./eva_ws
+      dockerfile: Dockerfile
+    container_name: eva_ws_test
+    restart: always
+    ports:
+      - 8083:8080
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      mongo_db:
+        condition: service_healthy
     networks:
       - eva_network
 
