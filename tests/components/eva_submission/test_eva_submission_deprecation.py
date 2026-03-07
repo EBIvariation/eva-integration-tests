@@ -264,9 +264,13 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         # Verify all 3 submittedVariantEntity documents are deprecated
         with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
             count = mongo_conn['eva_accession_sharded']['submittedVariantEntity'].count_documents(
-                {'study': 'PRJEB12345', 'accessioningStopped': True}
+                {'study': self.project_accession, 'seq': self.assembly_accession}
             )
-        assert count == 3, f"Expected 3 deprecated submittedVariantEntity documents, got: {count}"
+            assert count == 0
+            count = mongo_conn['eva_accession_sharded']['submittedVariantOperationEntity'].count_documents(
+                {'inactiveObjects.study': self.project_accession, 'inactiveObjects.seq': self.assembly_accession}
+            )
+            assert count == 3
 
     @log_on_failure
     def test_deprecate_drop_study(self):
