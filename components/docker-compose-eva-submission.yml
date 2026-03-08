@@ -131,11 +131,12 @@ services:
     healthcheck:
       test:
         [
-          "CMD", "mongosh", "--eval", "db.adminCommand('ping')"
+          "CMD", "mongosh", "--eval",
+          "if (db.adminCommand({listShards: 1}).shards.length === 0) { quit(1); }"
         ]
       interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 30
       start_period: 60s
 
   mock-ws:
