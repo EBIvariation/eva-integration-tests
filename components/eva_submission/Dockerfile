@@ -73,14 +73,6 @@ COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_submission/install_repo.sh /opt/
 COPY mongo_db/mongo_admin_prod_pass /root/.mongo_admin_prod_pass
 
-ENV SOURCE_GITHUB_REPOSITORY $SOURCE_GITHUB_REPOSITORY
-ENV SOURCE_GITHUB_REF $SOURCE_GITHUB_REF
-ENV SOURCE_GITHUB_SHA $SOURCE_GITHUB_SHA
-
-# Run the installation of the repository
-RUN ./install_repo.sh
-
-
 WORKDIR /usr/local/software
 
 # setup eva-accession
@@ -116,5 +108,11 @@ RUN git clone https://github.com/Ensembl/ensembl-vep.git
 RUN cd ensembl-vep && perl INSTALL.pl
 
 WORKDIR /opt
+ENV SOURCE_GITHUB_REPOSITORY=$SOURCE_GITHUB_REPOSITORY
+ENV SOURCE_GITHUB_REF=$SOURCE_GITHUB_REF
+ENV SOURCE_GITHUB_SHA=$SOURCE_GITHUB_SHA
+
+# Run the installation of the repository
+RUN ./install_repo.sh
 
 CMD tail -f /dev/null

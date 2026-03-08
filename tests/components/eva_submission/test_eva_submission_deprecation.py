@@ -128,27 +128,27 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
                         'seq': 'GCA_000004515.4', 'tax': 3847, 'study': 'PRJEB12345',
                         'contig': 'CM000834.3', 'start': Int64(315),
                         'ref': 'G', 'alt': 'C',
-                        'accession': Int64(100000001), 'version': 1, 'createdDate': created_date
+                        'accession': Int64(5000000001), 'version': 1, 'createdDate': created_date
                     },
                     {
                         '_id': 'B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3',
                         'seq': 'GCA_000004515.4', 'tax': 3847, 'study': 'PRJEB12345',
                         'contig': 'CM000834.3', 'start': Int64(420),
                         'ref': 'A', 'alt': 'T',
-                        'accession': Int64(100000002), 'version': 1, 'createdDate': created_date
+                        'accession': Int64(5000000002), 'version': 1, 'createdDate': created_date
                     },
                     {
                         '_id': 'C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4',
                         'seq': 'GCA_000004515.4', 'tax': 3847, 'study': 'PRJEB12345',
                         'contig': 'CM000834.3', 'start': Int64(530),
                         'ref': 'T', 'alt': 'C',
-                        'accession': Int64(100000003), 'version': 1, 'createdDate': created_date
+                        'accession': Int64(5000000003), 'version': 1, 'createdDate': created_date
                     },
                 ]
             )
-            # mongo_conn.admin.command({"enableSharding": 'eva_glycine_max_v2'})
-            # mongo_conn.admin.command({'shardCollection': 'eva_glycine_max_v2.variants_2_0', 'key':{'chr': 1, 'start': 1}})
-            variant_db = mongo_conn['eva_glycine_max_v2']
+            # mongo_conn.admin.command({"enableSharding": 'eva_gmax_glycine_max_v2'})
+            # mongo_conn.admin.command({'shardCollection': 'eva_gmax_glycine_max_v2.variants_2_0', 'key':{'chr': 1, 'start': 1}})
+            variant_db = mongo_conn['eva_gmax_glycine_max_v2']
             self._insert_many_ignore_duplicates(
                 variant_db['variants_2_0'],
                 [
@@ -192,9 +192,9 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
             f.write('##fileformat=VCFv4.1\n')
             f.write('##reference=GCA_000004515.4\n')
             f.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
-            f.write('CM000834.3\t315\tss100000001\tG\tC\t100\tPASS\t.\n')
-            f.write('CM000834.3\t420\tss100000002\tA\tT\t100\tPASS\t.\n')
-            f.write('CM000834.3\t530\tss100000003\tT\tC\t100\tPASS\t.\n')
+            f.write('CM000834.3\t315\tss5000000001\tG\tC\t100\tPASS\t.\n')
+            f.write('CM000834.3\t420\tss5000000002\tA\tT\t100\tPASS\t.\n')
+            f.write('CM000834.3\t530\tss5000000003\tT\tC\t100\tPASS\t.\n')
 
         container_dir = '/opt/submissions/ELOAD_1/60_eva_public'
         copy_files_to_container(self.container_name, container_dir, local_vcf)
@@ -273,7 +273,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
 
     @log_on_failure
     def test_deprecate_drop_study(self):
-        db_name = 'eva_glycine_max_v2'
+        db_name = 'eva_gmax_glycine_max_v2'
         drop_study_log_file  = f'{self.container_output_dir}/nextflow_output_*/*/*/.command.out'
         self.container_log_files.append((self.container_name, drop_study_log_file))
         drop_study_properties = f'{self.container_output_dir}/drop_study.properties'
@@ -284,8 +284,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         )
         self._run_deprecate('drop_study', extra_args=assemblies_arg)
 
-        # Verify variants_2_0 no longer has PRJEB12345 (study ID is nested in files[].sid)
-        # and files_2_0 no longer has PRJEB12345
+        # Verify variants_2_0 and files_2_0 no longer has PRJEB12345
         with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
             variant_db = mongo_conn[db_name]
             variants_count = variant_db['variants_2_0'].count_documents({'files.sid': 'PRJEB12345'})
