@@ -5,7 +5,7 @@ ARG SOURCE_GITHUB_REF
 ARG SOURCE_GITHUB_SHA
 
 ENV vcf_validator_version=0.9.4
-ENV NXF_VER=21.10.5
+ENV NXF_VER=22.04.0
 ENV MONGOSH_VERSION=2.7.0
 
 
@@ -56,7 +56,7 @@ RUN pip3 install gyp-next \
     && npm link
 
 # Install nextflow
-RUN curl -L "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
+RUN curl -L  "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
     && mv nextflow /usr/local/bin/
 
 
@@ -73,14 +73,6 @@ COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_submission/install_repo.sh /opt/
 COPY mongo_db/mongo_admin_prod_pass /root/.mongo_admin_prod_pass
 
-ENV SOURCE_GITHUB_REPOSITORY $SOURCE_GITHUB_REPOSITORY
-ENV SOURCE_GITHUB_REF $SOURCE_GITHUB_REF
-ENV SOURCE_GITHUB_SHA $SOURCE_GITHUB_SHA
-
-# Run the installation of the repository
-RUN ./install_repo.sh
-
-
 WORKDIR /usr/local/software
 
 # setup eva-accession
@@ -90,6 +82,7 @@ RUN cp eva-accession/eva-accession-pipeline/target/eva-accession-pipeline-*-exec
 RUN cp eva-accession/eva-accession-clustering/target/eva-accession-clustering-*-exec.jar /usr/local/software/eva-accession-clustering.jar
 RUN cp eva-accession/eva-remapping-get-source/target/eva-remapping-get-source-*-exec.jar /usr/local/software/eva-remapping-get-source.jar
 RUN cp eva-accession/eva-remapping-ingest/target/eva-remapping-ingest-*-exec.jar /usr/local/software/eva-remapping-ingest.jar
+RUN cp eva-accession/eva-accession-deprecate/target/eva-accession-deprecate-*-exec.jar /usr/local/software/eva-accession-deprecate.jar
 
 # setup eva-pipeline
 RUN git clone --single-branch https://github.com/EBIvariation/eva-pipeline.git
@@ -115,5 +108,11 @@ RUN git clone https://github.com/Ensembl/ensembl-vep.git
 RUN cd ensembl-vep && perl INSTALL.pl
 
 WORKDIR /opt
+ENV SOURCE_GITHUB_REPOSITORY=$SOURCE_GITHUB_REPOSITORY
+ENV SOURCE_GITHUB_REF=$SOURCE_GITHUB_REF
+ENV SOURCE_GITHUB_SHA=$SOURCE_GITHUB_SHA
+
+# Run the installation of the repository
+RUN ./install_repo.sh
 
 CMD tail -f /dev/null

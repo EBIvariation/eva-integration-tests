@@ -59,7 +59,7 @@ def copy_files_from_container(container_name, dir_path, local_dir_path, docker_p
 
 def read_file_from_container(container_name, file_path, docker_path='docker'):
     return run_quiet_command("read content of the file from container",
-                             f" {docker_path} exec {container_name} cat {file_path}",
+                             f'{docker_path} exec {container_name} cat {file_path}',
                              return_process_output=True)
 
 def read_file_from_local(file_path):
