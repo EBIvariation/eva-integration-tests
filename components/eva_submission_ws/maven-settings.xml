@@ -27,6 +27,7 @@
                 <eva.email-port>1025</eva.email-port>
 
                 <callhome.schema-url>https://raw.githubusercontent.com/EBIvariation/eva-sub-cli/main/eva_sub_cli/etc/call_home_payload_schema.json</callhome.schema-url>
+                <eva.submission.account>eva_webin</eva.submission.account>
             </properties>
         </profile>
 
