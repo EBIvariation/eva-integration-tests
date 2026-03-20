@@ -21,6 +21,22 @@ services:
     networks:
       - eva_network
 
+  contig-alias:
+    image: contig_alias_ws_test
+    build:
+      # context to where the maven file is located
+      context: .
+      dockerfile: contig_alias_ws/Dockerfile
+    container_name: contig_alias_ws_test
+    restart: always
+    ports:
+      - 8081:8080
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    networks:
+      - eva_network
+
   postgres_db:
     image: postgres_db_test
     build:

@@ -7,7 +7,7 @@ from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 from pymongo.errors import BulkWriteError
 
-from utils.docker_utils import copy_files_to_container, run_command_in_container
+from utils.docker_utils import copy_files_to_container
 from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
@@ -57,17 +57,73 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                                 os.path.join(self.fasta_files_dir, 'GCA_002263795.4.fa'))
 
     def _seed_evapro(self):
-        """Insert supported_assembly_tracker rows needed to test assembly ingestion."""
         with get_metadata_connection_handle('docker', self.settings_file) as conn:
+            # Supported assembly tracker
             execute_query(
                 conn,
-                "INSERT INTO "
-                "evapro.supported_assembly_tracker (taxonomy_id,source,assembly_id,current,start_date,end_date) "
+                "INSERT INTO evapro.supported_assembly_tracker "
+                "(taxonomy_id,source,assembly_id,current,start_date,end_date) "
                 "VALUES (9913,'Ensembl','GCA_000003055.5',false,'2021-01-01','2021-12-22'), "
-                "(9913,'Ensembl','GCA_002263795.2',false,'2021-12-22','infinity'), " 
-                "(9903,'Ensembl','GCA_002263795.2',false,'2021-01-01','infinity') "
+                "(9913,'Ensembl','GCA_002263795.2',true,'2021-12-22','infinity'), "
+                "(9903,'Ensembl','GCA_002263795.2',true,'2021-01-01','infinity') "
                 "ON CONFLICT DO NOTHING"
             )
+
+            # Minimal metadata for getting source assemblies and taxonomies
+            # Projects used in test accessioning data:
+            # - (PRJEB29734, 9913, GCA_000003055.5)
+            # - (PRJEB42513, 9913, GCA_002263795.2)
+            # - (PRJEB42510, 9903, GCA_002263795.2)
+            execute_query(conn,
+                          "INSERT INTO evapro.project "
+                          "(project_accession, center_name, alias, title, description, scope, material, type, "
+                          "ena_status, eva_status) "
+                          "VALUES ('PRJEB29734', 'Test Centre', 'ELOAD_1', 'Test Study', 'Test description', "
+                          "'Multi-isolate', 'DNA', 'Study', 4, 1), "
+                          "('PRJEB42513', 'Test Centre', 'ELOAD_2', 'Test Study', 'Test description', "
+                          "'Multi-isolate', 'DNA', 'Study', 4, 1), "
+                          "('PRJEB42510', 'Test Centre', 'ELOAD_3', 'Test Study', 'Test description', "
+                          "'Multi-isolate', 'DNA', 'Study', 4, 1)"
+                          "ON CONFLICT DO NOTHING"
+                          )
+            execute_query(conn,
+                          "INSERT INTO evapro.taxonomy (taxonomy_id, common_name, scientific_name, taxonomy_code, eva_name) "
+                          "VALUES (9913, 'Cattle', 'Bos taurus', 'btaurus', 'cow'), "
+                          "(9903, 'Oxen cattle', 'Bos', 'bos', 'cattle')"
+                          "ON CONFLICT DO NOTHING"
+                          )
+            execute_query(conn,
+                          "INSERT INTO evapro.project_taxonomy (project_accession, taxonomy_id) "
+                          "VALUES ('PRJEB29734', 9913), ('PRJEB42513', 9913), ('PRJEB42510', 9903) "
+                          "ON CONFLICT DO NOTHING"
+                          )
+            execute_query(conn,
+                          "INSERT INTO evapro.assembly_set (taxonomy_id, assembly_name, assembly_code) "
+                          "VALUES (9913, 'Bos_taurus_UMD_3.1.1', 'umd311'), "
+                          "(9913, 'ARS-UCD1.2', 'arsucd12'), "
+                          "(9903, 'ARS-UCD1.2', 'arsucd12') "
+                          "ON CONFLICT DO NOTHING"
+                          )
+            execute_query(conn,
+                          "INSERT INTO evapro.analysis "
+                          "(analysis_accession, title, alias, vcf_reference_accession, hidden_in_eva, assembly_set_id) "
+                          "VALUES ('ERZ123', 'Test Analysis', 'test_analysis', 'GCA_000003055.5', 0, 1), "
+                          "('ERZ456', 'Test Analysis', 'test_analysis', 'GCA_002263795.2', 0, 2), "
+                          "('ERZ789', 'Test Analysis', 'test_analysis', 'GCA_002263795.2', 0, 3) "
+                          "ON CONFLICT DO NOTHING"
+                          )
+            execute_query(conn,
+                          "INSERT INTO evapro.project_analysis (project_accession, analysis_accession) "
+                          "VALUES ('PRJEB29734', 'ERZ123'), ('PRJEB42513', 'ERZ456'), ('PRJEB42510', 'ERZ789') "
+                          "ON CONFLICT DO NOTHING"
+                          )
+            # dbSNP source assemblies come from release 3 in tracker
+            execute_query(conn,
+                          "INSERT INTO eva_progress_tracker.remapping_tracker "
+                          "(source,taxonomy,scientific_name,origin_assembly_accession,num_studies,num_ss_ids,release_version,assembly_accession,remapping_status) "
+                          "VALUES ('DBSNP',9913,'Bos taurus','GCA_000003055.5',1,1,3,'GCA_002263795.2','Completed') "
+                          "ON CONFLICT DO NOTHING"
+                          )
 
     @staticmethod
     def _insert_many_ignore_duplicates(collection, documents):
@@ -137,7 +193,7 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                         '_id': 'DEBE9A053C76D33EE59CE35760AFF029A1354A8B',
                         'seq': 'GCA_002263795.2',
                         'tax': 9903,
-                        'study': 'PRJEB42513',
+                        'study': 'PRJEB42510',
                         'contig': 'CM008192.2',
                         'start': Int64(242863),
                         'ref': 'A',
@@ -246,6 +302,8 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
         # TODO expected new rows in supported assembly tracker
         # "(9903,'Ensembl','GCA_002263795.4',true,'2025-10-23','infinity') "
         # "(9913,'Ensembl','GCA_002263795.4',true,'2025-10-23','infinity'), "
+
+        # TODO expected update to contig alias
 
         # TODO expected remapped documents - get from DB
 

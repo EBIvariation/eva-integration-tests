@@ -52,6 +52,7 @@ RUN git clone https://github.com/EBIvariation/variant-remapping.git variant-rema
 RUN mkdir -p /root/.nextflow
 COPY eva_assembly_ingestion/nextflow.config /root/.nextflow/config
 COPY eva_assembly_ingestion/assembly_config.yml /root/.assembly_config.yml
+COPY eva_assembly_ingestion/assembly_config.yml /root/.submission_config.yml
 COPY maven-settings.xml /root/maven-settings.xml
 COPY eva_assembly_ingestion/install_repo.sh /opt/
 
