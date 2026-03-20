@@ -1,0 +1,16 @@
+executable:
+  nextflow: nextflow
+  bcftools: bcftools
+  convert_vcf_file: convert_vcf_file.py
+  vcf_validator: vcf_validator
+  vcf_assembly_checker: vcf_assembly_checker
+jar:
+  release_pipeline: /usr/local/software/eva-accession-release.jar
+maven:
+  environment: docker
+  settings_file: /root/maven.xml
+genome_downloader:
+  output_directory: /tmp/reference
+release:
+  inventory_table: eva_progress_tracker.clustering_release_tracker
+  release_output: /opt/test_eva_release/
