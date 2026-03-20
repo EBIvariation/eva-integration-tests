@@ -1,0 +1,69 @@
+
+services:
+  eva_release_automation_test:
+    image: eva_release_automation_test
+    build:
+      context: .
+      dockerfile: eva_release_automation/Dockerfile
+      args:
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
+    container_name: eva_release_automation_test
+    command: tail -f /dev/null
+    volumes:
+      - ../tests/resources/release_automation:/opt/tests/release_automation/resources:ro
+      - ../tests/eva_release_automation_test_run:/opt/test_eva_release/
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      mongo_db:
+        condition: service_healthy
+    networks:
+      - eva_network
+
+  postgres_db:
+    image: postgres_db_test
+    build:
+      context: ./postgres_db
+      dockerfile: Dockerfile
+    container_name: postgres_db_test
+    restart: always
+    environment:
+      - POSTGRES_USER=root_user
+      - POSTGRES_PASSWORD=root_pass
+    ports:
+      - 5433:5432
+    networks:
+      - eva_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root_user" ]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  mongo_db:
+    image: mongo_db_test
+    build:
+      context: ./mongo_db
+      dockerfile: Dockerfile
+    container_name: mongo_db_test
+    restart: always
+    ports:
+      - 27018:27017
+    networks:
+      - eva_network
+    healthcheck:
+      test:
+        [
+          "CMD", "mongosh", "--eval",
+          "if (db.adminCommand({listShards: 1}).shards.length === 0) { quit(1); }"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+networks:
+  eva_network:
+    name: eva_network
