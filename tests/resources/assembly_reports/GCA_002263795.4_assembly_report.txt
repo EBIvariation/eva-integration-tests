@@ -1,0 +1,2 @@
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+25	assembled-molecule	25	Chromosome	CM008192.2	=	NC_037352.1	Primary Assembly	42350435	chr25

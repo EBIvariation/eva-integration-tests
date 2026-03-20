@@ -1,0 +1,33 @@
+maven:
+  environment: docker
+  settings_file: /root/maven-settings.xml
+
+remapping:
+  base_directory: /opt/variant_remapping_output
+
+eutils_api_key: ''
+
+genome_downloader:
+  output_directory: /opt/reference_sequences
+
+executable:
+  nextflow: /usr/local/bin/nextflow
+  bgzip: /usr/bin/bgzip
+  bcftools: /usr/bin/bcftools
+  tabix: /usr/bin/tabix
+  md5sum: /usr/bin/md5sum
+  samtools: /usr/bin/samtools
+  bedtools: /usr/bin/bedtools
+  minimap2: /usr/bin/minimap2
+  genome_downloader: /opt/eva-submission/bin/genome_downloader.py
+  custom_assembly: /opt/eva-assembly-ingestion/bin/get_custom_assembly.py
+  count_variants_from_logs: /opt/eva-assembly-ingestion/bin/count_variants_from_logs.py
+  python_activate: /opt/variant-remapping/python/bin/activate
+
+jar:
+  vcf_extractor: /usr/local/software/eva-remapping-get-source.jar
+  vcf_ingestion: /usr/local/software/eva-remapping-ingest.jar
+  clustering: /usr/local/software/eva-accession-clustering.jar
+
+nextflow:
+  remapping: /opt/variant-remapping/main.nf

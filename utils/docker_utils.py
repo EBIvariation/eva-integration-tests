@@ -1,14 +1,14 @@
 import os
-import re
 import shutil
 import subprocess
-from tempfile import mktemp, mkstemp, mkdtemp
+from tempfile import mkdtemp
 
 from ebi_eva_common_pyutils.logger import logging_config
 
 from utils.test_utils import run_quiet_command
 
 logger = logging_config.get_logger(__name__)
+
 
 def run_docker_cmd(description, command):
     log_file = None
@@ -32,7 +32,6 @@ def run_docker_cmd(description, command):
 def build_from_docker_compose(docker_compose_file, docker_path='docker'):
     run_docker_cmd("build all services defined in docker compose file",
                    f"{docker_path} compose -f {docker_compose_file} build")
-
 
 
 def stop_and_remove_all_containers_in_docker_compose(docker_compose_file, docker_path='docker'):
@@ -62,9 +61,11 @@ def read_file_from_container(container_name, file_path, docker_path='docker'):
                              f'{docker_path} exec {container_name} cat {file_path}',
                              return_process_output=True)
 
+
 def read_file_from_local(file_path):
     with open(file_path) as f:
         return f.read()
+
 
 def run_command_in_container(container_name, command_to_run, docker_path='docker'):
     return run_quiet_command("run command in container",

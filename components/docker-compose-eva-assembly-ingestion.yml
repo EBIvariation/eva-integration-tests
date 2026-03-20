@@ -1,0 +1,68 @@
+
+services:
+  eva_assembly_ingestion:
+    image: eva_assembly_ingestion_test
+    build:
+      # context to where the maven file is located
+      context: .
+      dockerfile: eva_assembly_ingestion/Dockerfile
+      args:
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
+    container_name: eva_assembly_ingestion_test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      mongo_db:
+        condition: service_healthy
+    networks:
+      - eva_network
+
+  postgres_db:
+    image: postgres_db_test
+    build:
+      context: ./postgres_db
+      dockerfile: Dockerfile
+    container_name: postgres_db_test
+    restart: always
+    environment:
+      - POSTGRES_USER=root_user
+      - POSTGRES_PASSWORD=root_pass
+    ports:
+      - 5432:5432
+    networks:
+      - eva_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root_user" ]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  mongo_db:
+    image: mongo_db_test
+    build:
+      context: ./mongo_db
+      dockerfile: Dockerfile
+    container_name: mongo_db_test
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - eva_network
+    healthcheck:
+      test:
+        [
+          "CMD", "mongosh", "--eval",
+          "if (db.adminCommand({listShards: 1}).shards.length === 0) { quit(1); }"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+networks:
+  eva_network:
+    name: eva_network

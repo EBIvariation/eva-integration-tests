@@ -6,3 +6,4 @@ COPY 03_eva_submissions.sql /docker-entrypoint-initdb.d/
 COPY 04_eva_pro_inserts_for_ingestion.sql /docker-entrypoint-initdb.d/
 COPY 05_variant_jt.sql /docker-entrypoint-initdb.d/
 COPY 06_accession_jt.sql /docker-entrypoint-initdb.d/
+COPY 07_eva_progress_tracker.sql /docker-entrypoint-initdb.d/

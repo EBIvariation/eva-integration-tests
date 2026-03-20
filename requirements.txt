@@ -1,5 +1,6 @@
 ebi-eva-common-pyutils[eva-internal]>=0.7.0, ==0.*
 psycopg2-binary
+pymongo
 pytest
 flake8
 flask
