@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 
 from bson import Int64
+from ebi_eva_common_pyutils.contig_alias.contig_alias import ContigAliasClient
+from ebi_eva_internal_pyutils.config_utils import get_contig_alias_db_creds_for_profile
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
@@ -298,22 +300,50 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
         )
         run_quiet_command('run add_target_assembly.py', cmd)
 
-        # TODO assertions
-        # TODO expected new rows in supported assembly tracker
-        # "(9903,'Ensembl','GCA_002263795.4',true,'2025-10-23','infinity') "
-        # "(9913,'Ensembl','GCA_002263795.4',true,'2025-10-23','infinity'), "
+        associated_taxonomy = 9903
+        with get_metadata_connection_handle('docker', self.settings_file) as conn:
+            # Supported assembly should be updated for both taxonomies
+            supported_assembly_query = (
+                f"SELECT assembly_id FROM evapro.supported_assembly_tracker "
+                f"WHERE taxonomy_id in ({self.taxonomy}, {associated_taxonomy}) "
+                f"AND current = 'true'"
+            )
+            results = get_all_results_for_query(conn, supported_assembly_query)
+            assert len(results) == 2
+            for result in results:
+                assert result[0] == self.target_assembly
 
-        # TODO expected update to contig alias
+            # Remapping tracker should contain 4 completed jobs:
+            # - 2 source assemblies for EVA, including 1 with an additional taxonomy
+            # - 1 source assembly for dbSNP
+            remapping_tracker_query = (
+                f"SELECT remapping_status FROM eva_progress_tracker.remapping_tracker "
+                f"WHERE release_version={self.release_version} "
+                f"AND assembly_accession='{self.target_assembly}'"
+            )
+            results = get_all_results_for_query(conn, remapping_tracker_query)
+            assert len(results) == 4
+            for result in results:
+                assert result[0] == 'Completed'
 
-        # TODO expected remapped documents - get from DB
+        # Contig alias should contain the new assembly
+        contig_alias_client = ContigAliasClient(get_contig_alias_db_creds_for_profile('docker', self.settings_file)[0])
+        assembly = contig_alias_client.assembly(self.target_assembly)
+        assert assembly is not None
 
-        # Verify all 3 submittedVariantEntity documents are deprecated
-        # with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
-        #     count = mongo_conn['eva_accession_sharded']['submittedVariantEntity'].count_documents(
-        #         {'study': self.project_accession, 'seq': self.assembly_accession}
-        #     )
-        #     assert count == 0
-        #     count = mongo_conn['eva_accession_sharded']['submittedVariantOperationEntity'].count_documents(
-        #         {'inactiveObjects.study': self.project_accession, 'inactiveObjects.seq': self.assembly_accession}
-        #     )
-        #     assert count == 3
+        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+            # 3 remapped SVEs and CVEs for EVA
+            assert mongo_conn['eva_accession_sharded']['submittedVariantEntity'].count_documents(
+                {'seq': self.target_assembly}
+            ) == 3
+            assert mongo_conn['eva_accession_sharded']['clusteredVariantEntity'].count_documents(
+                {'asm': self.target_assembly}
+            ) == 3
+
+            # 1 remapped SVE and CVE for dbSNP
+            assert mongo_conn['eva_accession_sharded']['dbsnpSubmittedVariantEntity'].count_documents(
+                {'seq': self.target_assembly}
+            ) == 1
+            assert mongo_conn['eva_accession_sharded']['dbsnpClusteredVariantEntity'].count_documents(
+                {'asm': self.target_assembly}
+            ) == 1

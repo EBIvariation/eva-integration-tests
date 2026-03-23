@@ -41,6 +41,9 @@
                 <contig-alias.admin-user>contig_alias_admin_user</contig-alias.admin-user>
                 <contig-alias.admin-password>contig_alias_admin_pass</contig-alias.admin-password>
 
+                <ftp.proxy.host></ftp.proxy.host>
+                <ftp.proxy.port></ftp.proxy.port>
+
                 <eva.count-stats.url>http://eva-ws:8080/count_stats</eva.count-stats.url>
                 <eva.count-stats.username>count_stats_user</eva.count-stats.username>
                 <eva.count-stats.password>count_stats_pass</eva.count-stats.password>

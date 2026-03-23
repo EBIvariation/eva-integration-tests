@@ -26,6 +26,10 @@
                 <eva.mongo.collections.annotations>annotations_2_0</eva.mongo.collections.annotations>
                 <eva.accession.mongo.database>eva_accession_sharded</eva.accession.mongo.database>
                 <eva.accession.mongo.human.database>eva_accession_human_sharded</eva.accession.mongo.human.database>
+
+                <contig-alias.url>http://localhost:8081/contig-alias</contig-alias.url>
+                <contig-alias.admin-user></contig-alias.admin-user>
+                <contig-alias.admin-password></contig-alias.admin-password>
             </properties>
 
         </profile>
