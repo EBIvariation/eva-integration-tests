@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 from datetime import datetime
 
 from bson import Int64
@@ -7,7 +8,7 @@ from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_hand
 from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import execute_query, get_all_results_for_query
 
-from utils.docker_utils import run_command_in_container
+from utils.docker_utils import copy_files_to_container, run_command_in_container
 from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 resources_dir = os.path.join(TestWithDockerCompose.resources_directory, 'release_automation')
@@ -160,6 +161,53 @@ class TestRunReleaseForSpecies(TestWithDockerCompose):
 
         assembly_dir = os.path.join(ftp_release_dir, 'by_assembly', 'GCA_000005425.2')
         assert os.path.isdir(assembly_dir), f'Expected assembly directory not found: {assembly_dir}'
+
+    @log_on_failure
+    def test_publish_release_to_ftp_uses_hard_links(self):
+        assembly_accession = 'GCA_000005425.2'
+        fasta_file = '/opt/tests/release_automation/resources/GCA_000005425.2.fa'
+        report_file = '/opt/tests/release_automation/resources/GCA_000005425.2_assembly_report.txt'
+        container_v1_dir = f'{self.container_release_dir}/ftp/release_1/by_assembly/{assembly_accession}'
+        release_filenames = [
+            f'4530_{assembly_accession}_current_ids.vcf.gz',
+            f'4530_{assembly_accession}_current_ids.vcf.gz.csi',
+            f'4530_{assembly_accession}_deprecated_ids.txt.gz',
+            f'4530_{assembly_accession}_merged_ids.vcf.gz',
+            f'4530_{assembly_accession}_merged_ids.vcf.gz.csi',
+            'md5checksums.txt',
+        ]
+
+        # Seed fake release v1 FTP files into the container
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            for filename in release_filenames:
+                local_file = os.path.join(tmp_dir, filename)
+                open(local_file, 'w').close()
+                copy_files_to_container(self.container_name, container_v1_dir, local_file)
+
+        # Insert release v2 tracking row with should_be_released=False
+        with get_metadata_connection_handle(maven_profile, maven_settings_file) as conn:
+            execute_query(conn,
+                          "INSERT INTO eva_progress_tracker.clustering_release_tracker "
+                          "(taxonomy, scientific_name, assembly_accession, release_version, sources, fasta_path, "
+                          "report_path, should_be_released, num_rs_to_release, total_num_variants, release_folder_name) "
+                          f"VALUES (4530, 'Oryza sativa', '{assembly_accession}', 2, 'EVA', '{fasta_file}', "
+                          f"'{report_file}', False, 0, 1, 'oryza_sativa')")
+
+        # Publish release v2 — should hard-link from v1
+        run_command_in_container(
+            self.container_name,
+            'python3 -m publish_release_to_ftp.publish_release_files_to_ftp '
+            '--release_version 2 --taxonomy_id 4530'
+        )
+
+        v1_dir = os.path.join(self.test_run_dir, 'ftp', 'release_1', 'by_assembly', assembly_accession)
+        v2_dir = os.path.join(self.test_run_dir, 'ftp', 'release_2', 'by_assembly', assembly_accession)
+        for filename in release_filenames:
+            v1_file = os.path.join(v1_dir, filename)
+            v2_file = os.path.join(v2_dir, filename)
+            assert os.path.isfile(v2_file), f'Expected hard-linked file not found: {v2_file}'
+            assert os.stat(v1_file).st_ino == os.stat(v2_file).st_ino, \
+                f'{filename} in release_2 should be a hard link to release_1 (same inode)'
 
     @log_on_failure
     def test_create_release_tracking_table(self):
