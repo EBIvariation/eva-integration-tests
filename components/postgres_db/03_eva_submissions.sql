@@ -127,6 +127,13 @@ CREATE TABLE eva_submissions.call_home_event (
 ALTER TABLE eva_submissions.call_home_event OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.call_home_event to metadata_db_user;
 
---- Insert the test eva submission account
-INSERT INTO eva_submissions.submission_account (id,first_name,last_name,login_type,primary_email,user_id) VALUES
-	 ('eva_webin','Test','User','webin','test@ebi.ac.uk','Webin-123');
+--- table (submission_eload)
+CREATE TABLE eva_submissions.submission_eload (
+	submission_id varchar(255) NOT NULL,
+	eload int4 NOT NULL,
+	CONSTRAINT submission_eload_pkey PRIMARY KEY (submission_id),
+	CONSTRAINT eload_uniq UNIQUE (eload)
+);
+
+ALTER TABLE eva_submissions.submission_eload OWNER TO metadata_db_user;
+GRANT ALL ON TABLE eva_submissions.submission_eload TO metadata_db_user;

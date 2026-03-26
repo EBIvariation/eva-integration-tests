@@ -654,19 +654,6 @@ GRANT ALL ON TABLE evapro.project_dbxref TO metadata_db_user;
 ALTER TABLE evapro.project_dbxref ADD CONSTRAINT project_dbxref_dbxref_id_fkey FOREIGN KEY (dbxref_id) REFERENCES evapro.dbxref(dbxref_id);
 
 
-CREATE TABLE evapro.supported_assembly_tracker (
-	taxonomy_id int4 NOT NULL,
-	"source" varchar(50) NOT NULL,
-	assembly_id varchar(25) NOT NULL,
-	"current" bool NOT NULL,
-	start_date date NOT NULL DEFAULT CURRENT_DATE,
-	end_date date NOT NULL DEFAULT 'infinity'::date
-);
-
-ALTER TABLE evapro.supported_assembly_tracker OWNER TO metadata_db_user;
-GRANT ALL ON TABLE evapro.supported_assembly_tracker TO metadata_db_user;
-
-
 --- view (project_publication)
 CREATE OR REPLACE VIEW evapro.project_publication
 AS SELECT evapro.project_dbxref.project_accession,
