@@ -1,10 +1,11 @@
 import json
 import os
 
+from ebi_eva_common_pyutils.config import Configuration
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_internal_pyutils.pg_utils import execute_query
+from ebi_eva_internal_pyutils.pg_utils import execute_query, get_all_results_for_query
 
-from utils.docker_utils import copy_files_to_container, run_docker_cmd
+from utils.docker_utils import copy_files_to_container, run_docker_cmd, copy_files_from_container
 from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
@@ -26,6 +27,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
     def setUp(self):
         super().setUp()
         self.container_log_files = []
+        self.eload_number = 1
 
     @log_on_failure
     def test_prepare_submission_metadata_spreadsheet(self):
@@ -36,9 +38,32 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submitter username --ftp_box 1 --eload 1 > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number} > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata spreadsheet", prepare_cmd)
+
+        # assert submission id written to eload config and present in DB
+        copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
+        eload_config_yml = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                        f'.ELOAD_{self.eload_number}_config.yml')
+        assert os.path.isfile(eload_config_yml)
+        config = Configuration(eload_config_yml)
+        assert config['submission']['submission_id'] is not None
+        submission_id = config['submission']['submission_id']
+
+        settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
+        with get_metadata_connection_handle('docker', settings_file) as metadata_connection_handle:
+            query = (
+                f"select submission_id, eload from eva_submissions.submission_eload where eload = {self.eload_number}")
+            results = get_all_results_for_query(metadata_connection_handle, query)
+            assert len(results) == 1
+            assert results[0][0] == submission_id
+            assert results[0][1] == self.eload_number
+
+            query = (f"select submission_id from eva_submissions.submission where submission_id = '{submission_id}'")
+            results = get_all_results_for_query(metadata_connection_handle, query)
+            assert len(results) == 1
+            assert results[0][0] == submission_id
 
     @log_on_failure
     def test_prepare_submission_metadata_json_from_webservice(self):
@@ -49,9 +74,17 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
-            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submission_id {self.submission_id} --eload 1 > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submission_id {self.submission_id} --eload {self.eload_number} > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission prepare_submission script for metadata json from webservice", prepare_cmd)
+
+        # assert submission id written to eload config
+        copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
+        eload_config_yml = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                        f'.ELOAD_{self.eload_number}_config.yml')
+        assert os.path.isfile(eload_config_yml)
+        config = Configuration(eload_config_yml)
+        assert config['submission']['submission_id'] == self.submission_id
 
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
