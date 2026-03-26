@@ -36,7 +36,7 @@ jobs:
           - tests/components/eva_sub_cli/
           - tests/components/eva_submission/
           - tests/components/eva_assembly_ingestion/
-          - - tests/components/eva_release_automation/
+          - tests/components/eva_release_automation/
     env:
       WEBIN_TEST_USER_EMAIL: ${{ secrets.WEBIN_TEST_USER_EMAIL }}
       WEBIN_TEST_USER_PASSWORD: ${{ secrets.WEBIN_TEST_USER_PASSWORD }}
