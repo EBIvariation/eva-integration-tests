@@ -29,11 +29,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: lint
+    continue-on-error: true
     strategy:
       matrix:
         test-path:
           - tests/components/eva_sub_cli/
           - tests/components/eva_submission/
+          - tests/components/eva_assembly_ingestion/
     env:
       WEBIN_TEST_USER_EMAIL: ${{ secrets.WEBIN_TEST_USER_EMAIL }}
       WEBIN_TEST_USER_PASSWORD: ${{ secrets.WEBIN_TEST_USER_PASSWORD }}

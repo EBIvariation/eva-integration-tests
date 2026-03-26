@@ -833,3 +833,17 @@ CREATE TABLE evapro.clustered_variant_update (
 
 ALTER TABLE evapro.clustered_variant_update OWNER TO metadata_db_user;
 GRANT ALL ON TABLE evapro.clustered_variant_update TO metadata_db_user;
+
+
+--- table (supported_assembly_tracker)
+CREATE TABLE evapro.supported_assembly_tracker (
+	taxonomy_id int4 NOT NULL,
+	"source" varchar(50) NOT NULL,
+	assembly_id varchar(25) NOT NULL,
+	"current" bool NOT NULL,
+	start_date date DEFAULT 'now'::text::date NOT NULL,
+	end_date date DEFAULT 'infinity'::date NOT NULL
+);
+
+ALTER TABLE evapro.supported_assembly_tracker OWNER TO metadata_db_user;
+GRANT ALL ON TABLE evapro.supported_assembly_tracker TO metadata_db_user;
