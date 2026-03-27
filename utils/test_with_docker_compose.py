@@ -129,18 +129,21 @@ class TestWithDockerCompose(TestCase):
     def setUp(self):
         # stop and remove containers
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
+
+        # delete and recreate the test run dir before starting containers so that
+        # bind mounts point to a host directory with correct permissions
+        if self.test_run_dir:
+            if os.path.exists(self.test_run_dir):
+                shutil.rmtree(self.test_run_dir, ignore_errors=True)
+            os.makedirs(self.test_run_dir, exist_ok=True)
+
         # start containers
         start_all_containers_in_docker_compose(self.docker_compose_file)
 
-        # delete and recreate the test run dir
-        if os.path.exists(self.test_run_dir):
-            shutil.rmtree(self.test_run_dir)
-        os.makedirs(self.test_run_dir, exist_ok=True)
-
     def tearDown(self):
         # delete test run directory
-        if os.path.exists(self.test_run_dir):
-            shutil.rmtree(self.test_run_dir)
+        if self.test_run_dir and os.path.exists(self.test_run_dir):
+            shutil.rmtree(self.test_run_dir, ignore_errors=True)
 
         # stop and remove container
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)

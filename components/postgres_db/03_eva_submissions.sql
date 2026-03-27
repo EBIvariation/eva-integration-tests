@@ -126,3 +126,14 @@ CREATE TABLE eva_submissions.call_home_event (
 
 ALTER TABLE eva_submissions.call_home_event OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.call_home_event to metadata_db_user;
+
+--- table (submission_eload)
+CREATE TABLE eva_submissions.submission_eload (
+	submission_id varchar(255) NOT NULL,
+	eload int4 NOT NULL,
+	CONSTRAINT submission_eload_pkey PRIMARY KEY (submission_id),
+	CONSTRAINT eload_uniq UNIQUE (eload)
+);
+
+ALTER TABLE eva_submissions.submission_eload OWNER TO metadata_db_user;
+GRANT ALL ON TABLE eva_submissions.submission_eload TO metadata_db_user;

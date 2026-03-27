@@ -59,6 +59,16 @@ mongosh --port 27017 <<EOF
 sh.addShard("shard1ReplSet/localhost:27018")
 EOF
 
+echo "Creating admin user..."
+mongosh --port 27017 <<EOF
+use admin
+db.createUser({
+  user: "root_user",
+  pwd: "root_pass",
+  roles: [ { role: "root", db: "admin" } ]
+})
+EOF
+
 echo "Cluster started successfully."
 
 # Keep container running
