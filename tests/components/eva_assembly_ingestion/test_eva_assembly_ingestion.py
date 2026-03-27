@@ -20,7 +20,8 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
     container_name = 'eva_assembly_ingestion_test'
 
     test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_assembly_ingestion_test_run')
-    settings_file = os.path.join(TestWithDockerCompose.resources_directory, 'maven-settings.xml')
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
 
     fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
     assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
@@ -59,7 +60,7 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                                 os.path.join(self.fasta_files_dir, 'GCA_002263795.4.fa'))
 
     def _seed_evapro(self):
-        with get_metadata_connection_handle('docker', self.settings_file) as conn:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as conn:
             # Supported assembly tracker
             execute_query(
                 conn,
@@ -138,7 +139,7 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
 
     def _seed_mongodb(self):
         """Insert MongoDB documents needed for testing assembly ingestion."""
-        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+        with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
             # EVA variants:
             # - (9913, GCA_000003055.5) - 1 native SVE, no CVE
             # - (9913, GCA_002263795.2) - 1 remapped SVE, 1 native SVE, 2 CVEs
@@ -301,7 +302,7 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
         run_quiet_command('run add_target_assembly.py', cmd)
 
         associated_taxonomy = 9903
-        with get_metadata_connection_handle('docker', self.settings_file) as conn:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as conn:
             # Supported assembly should be updated for both taxonomies
             supported_assembly_query = (
                 f"SELECT assembly_id FROM evapro.supported_assembly_tracker "
@@ -327,11 +328,11 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                 assert result[0] == 'Completed'
 
         # Contig alias should contain the new assembly
-        contig_alias_client = ContigAliasClient(get_contig_alias_db_creds_for_profile('docker', self.settings_file)[0])
+        contig_alias_client = ContigAliasClient(get_contig_alias_db_creds_for_profile(self.maven_profile, self.maven_settings_file)[0])
         assembly = contig_alias_client.assembly(self.target_assembly)
         assert assembly is not None
 
-        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+        with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
             # 3 remapped SVEs and CVEs for EVA
             assert mongo_conn['eva_accession_sharded']['submittedVariantEntity'].count_documents(
                 {'seq': self.target_assembly}

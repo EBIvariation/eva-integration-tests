@@ -11,7 +11,8 @@ from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
 
 class TestEvaSubmissionPreparation(TestWithDockerCompose):
-    settings_file = os.path.join(TestWithDockerCompose.resources_directory, 'maven-settings.xml')
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
     test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
 
     docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
@@ -51,8 +52,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         assert config['submission']['submission_id'] is not None
         submission_id = config['submission']['submission_id']
 
-        settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
-        with get_metadata_connection_handle('docker', settings_file) as metadata_connection_handle:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
             query = (
                 f"select submission_id, eload from eva_submissions.submission_eload where eload = {self.eload_number}")
             results = get_all_results_for_query(metadata_connection_handle, query)
@@ -103,7 +103,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         copy_files_to_container(self.container_name, self.container_submission_dir_json_webservice, vcf_file)
 
         # insert data in eva-submission-ws tables
-        with get_metadata_connection_handle('docker', self.settings_file) as metadata_connection_handle:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
             # insert submission account
             submission_account_query = (
                 f"INSERT INTO eva_submissions.submission_account (id, first_name, last_name, login_type, primary_email, user_id) "

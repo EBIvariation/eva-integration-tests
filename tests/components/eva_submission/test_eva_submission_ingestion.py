@@ -33,6 +33,9 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
     container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
     container_eload_dir = '/opt/submissions'
 
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
+
     def setUp(self):
         super().setUp()
         self.container_log_files = []
@@ -207,8 +210,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         return public_ftp_dir
 
     def assert_data_from_ena_loaded_to_evapro(self):
-        settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
-        with get_metadata_connection_handle('docker', settings_file) as metadata_connection_handle:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
             query = ("select project_accession, taxonomy_id from evapro.project_taxonomy "
                      "where project_accession = 'PRJEB105137'")
             results = get_all_results_for_query(metadata_connection_handle, query)
@@ -330,8 +332,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
             assert set(results) == set(expected)
 
     def assert_data_loaded_to_mongodb(self):
-        settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
-        with get_mongo_connection_handle("docker", settings_file) as mongo_conn:
+        with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
             variant_database = mongo_conn['eva_spombe_asm294v2']
 
             files_coll = variant_database["files_2_0"]

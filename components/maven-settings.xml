@@ -42,30 +42,70 @@
                 <contig-alias.admin-user>contig_alias_admin_user</contig-alias.admin-user>
                 <contig-alias.admin-password>contig_alias_admin_pass</contig-alias.admin-password>
 
-                <ftp.proxy.host></ftp.proxy.host>
-                <ftp.proxy.port></ftp.proxy.port>
-
                 <eva.count-stats.url>http://eva-ws:8080/count_stats</eva.count-stats.url>
                 <eva.count-stats.username>count_stats_user</eva.count-stats.username>
                 <eva.count-stats.password>count_stats_pass</eva.count-stats.password>
+
+                <submission-ws.admin-user>eva-submission-ws-admin-user</submission-ws.admin-user>
+                <submission-ws.admin-password>eva-submission-ws-admin-pass</submission-ws.admin-password>
+
+                <globus.client-id>test-client-id</globus.client-id>
+                <globus.client-secret>test-client-secret</globus.client-secret>
+                <globus.refresh-token>test-refresh-token</globus.refresh-token>
+                <globus.upload-http-domain>http://mock-globus:5000</globus.upload-http-domain>
+                <globus.submission-endpoint-id>test-submission-endpoint-id</globus.submission-endpoint-id>
+                <globus.token-endpoint>http://mock-globus:5000/v2/oauth2/token</globus.token-endpoint>
+                <globus.transfer-base-url>http://mock-globus:5000/v0.10/operation/endpoint</globus.transfer-base-url>
+
+                <eva.helpdesk-email>eva-helpdesk@ebi.ac.uk</eva.helpdesk-email>
+                <eva.email-server>mailhog</eva.email-server>
+                <eva.email-port>1025</eva.email-port>
+                <eva.submission.account>eva_webin</eva.submission.account>
+
+                <ftp.proxy.host></ftp.proxy.host>
+                <ftp.proxy.port></ftp.proxy.port>
+
+                <webin.userinfo-url>https://wwwdev.ebi.ac.uk/ena/submit/webin/auth/admin/submission-account</webin.userinfo-url>
+
+                <callhome.schema-url>https://raw.githubusercontent.com/EBIvariation/eva-sub-cli/main/eva_sub_cli/etc/call_home_payload_schema.json</callhome.schema-url>
+
             </properties>
         </profile>
 
         <profile>
             <id>localhost</id>
             <properties>
-                <eva.evapro.jdbc.url>jdbc:postgresql://localhost:5433/metadata_db</eva.evapro.jdbc.url>
-                <eva.evapro.user>metadata_db_user</eva.evapro.user>
-                <eva.evapro.password>metadata_db_pass</eva.evapro.password>
-                <eva.accession.jdbc.url>jdbc:postgresql://localhost:5433/accession_jt</eva.accession.jdbc.url>
-                <eva.accession.user>accession_jt_user</eva.accession.user>
-                <eva.accession.password>accession_jt_pass</eva.accession.password>
-                <eva.accession.mongo.database>eva_accession_sharded</eva.accession.mongo.database>
-                <eva.mongo.host>localhost:27018</eva.mongo.host>
+                <eva.mongo.host>localhost:27017</eva.mongo.host>
                 <eva.mongo.user>root_user</eva.mongo.user>
                 <eva.mongo.passwd>root_pass</eva.mongo.passwd>
                 <eva.mongo.passwd.url-encoded>root_pass</eva.mongo.passwd.url-encoded>
                 <eva.mongo.auth.db>admin</eva.mongo.auth.db>
+                <eva.mongo.collections.variants>variants_2_0</eva.mongo.collections.variants>
+                <eva.mongo.collections.files>files_2_0</eva.mongo.collections.files>
+                <eva.mongo.collections.annotation-metadata>annotationMetadata_2_0</eva.mongo.collections.annotation-metadata>
+                <eva.mongo.collections.features>features_2_0</eva.mongo.collections.features>
+                <eva.mongo.collections.annotations>annotations_2_0</eva.mongo.collections.annotations>
+
+                <eva.evapro.jdbc.url>jdbc:postgresql://localhost:5432/metadata_db</eva.evapro.jdbc.url>
+                <eva.evapro.user>metadata_db_user</eva.evapro.user>
+                <eva.evapro.password>metadata_db_pass</eva.evapro.password>
+
+                <eva.accession.jdbc.url>jdbc:postgresql://localhost:5432/accession_jt</eva.accession.jdbc.url>
+                <eva.accession.user>accession_jt_user</eva.accession.user>
+                <eva.accession.password>accession_jt_pass</eva.accession.password>
+                <eva.accession.mongo.database>eva_accession_sharded</eva.accession.mongo.database>
+                <eva.accession.mongo.human.database>eva_accession_human_sharded</eva.accession.mongo.human.database>
+
+                <submission-ws.admin-user>eva-submission-ws-admin-user</submission-ws.admin-user>
+                <submission-ws.admin-password>eva-submission-ws-admin-pass</submission-ws.admin-password>
+
+                <eva.helpdesk-email>eva-helpdesk@ebi.ac.uk</eva.helpdesk-email>
+                <mailhog.email-messages>http://localhost:8025/api/v1/messages</mailhog.email-messages>
+
+                <contig-alias.url>http://localhost:8081/contig-alias</contig-alias.url>
+                <contig-alias.admin-user></contig-alias.admin-user>
+                <contig-alias.admin-password></contig-alias.admin-password>
+                
             </properties>
         </profile>
     </profiles>

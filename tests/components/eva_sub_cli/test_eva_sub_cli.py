@@ -32,6 +32,9 @@ class TestEvaSubCli(TestWithDockerCompose):
         ('eva_submission_ws_test', '/usr/local/software/logs/eva-submission-ws/eva-submission-ws.log'),
     ]
 
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
+
     webin_test_user = WebinTestUser()
 
     def setUp(self):
@@ -127,8 +130,7 @@ class TestEvaSubCli(TestWithDockerCompose):
 
     def assert_call_home_events_exist(self, expected_events=None, expected_tasks_list=None, expected_executors=None, metadata_connection_handle=None):
         if not metadata_connection_handle:
-            settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
-            metadata_connection_handle = get_metadata_connection_handle('docker', settings_file)
+            metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
         with metadata_connection_handle:
             call_home_query = (f"SELECT event_type, tasks, executor, raw_payload FROM eva_submissions.call_home_event")
             results = get_all_results_for_query(metadata_connection_handle, call_home_query)

@@ -12,6 +12,8 @@ from utils.docker_utils import copy_files_to_container, read_file_from_container
 from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
 
+maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+maven_profile = 'localhost'
 
 class TestEvaSubCliSubmission(TestEvaSubCli):
 
@@ -104,10 +106,9 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
 
         submission_id = submission_config_file['submission_id']
         submission_account_id = f"{webin_account}_webin"
-        settings_file = os.path.join(self.resources_directory, 'maven-settings.xml')
 
         # assert db details
-        with get_metadata_connection_handle('docker', settings_file) as metadata_connection_handle:
+        with get_metadata_connection_handle(maven_profile, maven_settings_file) as metadata_connection_handle:
             # assert submission account details
             submission_account_query = f"SELECT id, user_id FROM eva_submissions.submission_account WHERE id='{submission_account_id}'"
             for id, user_id in get_all_results_for_query(metadata_connection_handle, submission_account_query):
@@ -134,7 +135,7 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
         assert response.text == 'UPLOADED'
 
         # assert submission details
-        profile_properties = get_properties_from_xml_file('docker', settings_file)
+        profile_properties = get_properties_from_xml_file(maven_profile, maven_settings_file)
         response = requests.get(
             f'http://localhost:8080/eva/webservices/submission-ws/v1/admin/submission/{submission_id}',
             auth=(profile_properties['submission-ws.admin-user'], profile_properties['submission-ws.admin-password']))
@@ -165,12 +166,12 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
                                                                             'lastName': 'test_user_last_name'}
 
         # assert emails sent for submission upload
-        mailhog_email_mgs_url = get_properties_from_xml_file("docker", settings_file)['mailhog.email-messages']
+        mailhog_email_mgs_url = get_properties_from_xml_file(maven_profile, maven_settings_file)['mailhog.email-messages']
         response = requests.get(mailhog_email_mgs_url)
         emails = response.json()
 
         # assert email sent to eva-helpdesk on submission upload
-        eva_helpdesk_email = get_properties_from_xml_file('docker', settings_file)['eva.helpdesk-email']
+        eva_helpdesk_email = get_properties_from_xml_file(maven_profile, maven_settings_file)['eva.helpdesk-email']
         mail_to_helpdesk = [email for email in emails
                             if eva_helpdesk_email in email['Content']['Headers'].get('To', [])
                             and 'eva-noreply@ebi.ac.uk' in email['Content']['Headers'].get('From', [])

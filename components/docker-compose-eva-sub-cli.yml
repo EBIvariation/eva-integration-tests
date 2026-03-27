@@ -25,8 +25,8 @@ services:
   eva-submission-ws:
     image: eva_submission_ws_test
     build:
-      context: ./eva_submission_ws
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: eva_submission_ws/Dockerfile
     container_name: eva_submission_ws_test
     restart: always
     ports:
