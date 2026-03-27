@@ -20,7 +20,8 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     container_output_dir = '/opt/deprecation_output'
 
     test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_deprecation_test_run')
-    settings_file = os.path.join(TestWithDockerCompose.resources_directory, 'maven-settings.xml')
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
 
     project_accession = 'PRJEB12345'
     eload_id = 1
@@ -40,7 +41,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
 
     def _seed_evapro(self):
         """Insert the minimal EVAPRO rows needed to deprecate PRJEB12345."""
-        with get_metadata_connection_handle('docker', self.settings_file) as conn:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as conn:
             execute_query(conn,
                 "INSERT INTO evapro.taxonomy (taxonomy_id, common_name, scientific_name, taxonomy_code, eva_name) "
                 "VALUES (3847, 'Soybean', 'Glycine max', 'gmax', 'Soybean') "
@@ -117,7 +118,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     def _seed_mongodb(self):
         """Insert MongoDB documents needed by deprecation tests."""
         created_date = datetime(2021, 4, 28, 16, 32, 11, 168000, tzinfo=timezone.utc)
-        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+        with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
             self._insert_many_ignore_duplicates(
                 mongo_conn['eva_accession_sharded']['submittedVariantEntity'],
                 [
@@ -218,7 +219,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     def test_deprecate_mark_inactive(self):
         self._run_deprecate('mark_inactive')
 
-        with get_metadata_connection_handle('docker', self.settings_file) as conn:
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as conn:
             # project.eva_status should be 0 (inactive)
             results = get_all_results_for_query(
                 conn, "SELECT eva_status FROM evapro.project WHERE project_accession = 'PRJEB12345'"
@@ -257,7 +258,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         self._run_deprecate('deprecate_variants', extra_args=assemblies_arg)
 
         # Verify all 3 submittedVariantEntity documents are deprecated
-        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+        with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
             count = mongo_conn['eva_accession_sharded']['submittedVariantEntity'].count_documents(
                 {'study': self.project_accession, 'seq': self.assembly_accession}
             )
@@ -281,7 +282,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
         self._run_deprecate('drop_study', extra_args=assemblies_arg)
 
         # Verify variants_2_0 and files_2_0 no longer has PRJEB12345
-        with get_mongo_connection_handle("docker", self.settings_file) as mongo_conn:
+        with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
             variant_db = mongo_conn[db_name]
             variants_count = variant_db['variants_2_0'].count_documents({'files.sid': 'PRJEB12345'})
             files_count = variant_db['files_2_0'].count_documents({'sid': 'PRJEB12345'})
