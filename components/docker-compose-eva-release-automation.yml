@@ -33,7 +33,7 @@ services:
       - POSTGRES_USER=root_user
       - POSTGRES_PASSWORD=root_pass
     ports:
-      - 5433:5432
+      - 5432:5432
     networks:
       - eva_network
     healthcheck:
@@ -50,7 +50,7 @@ services:
     container_name: mongo_db_test
     restart: always
     ports:
-      - 27018:27017
+      - 27017:27017
     networks:
       - eva_network
     healthcheck:

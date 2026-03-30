@@ -94,6 +94,42 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
                                               tasks=tasks)
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
 
+    @log_on_failure
+    def test_validation_tasks_results_are_not_overwritten(self):
+        prepare_cmd = (f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 "
+                       f"--eload {self.eload_number}")
+
+        # Run preparation from command line
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+
+        # Run first set of tasks
+        validation_cmd = (
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
+            f"--validation_tasks metadata_check structural_variant_check "
+            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+        )
+        run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+
+        # Run the next set of tasks
+        validation_cmd = (
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
+            f"--validation_tasks vcf_check naming_convention_check "
+            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+        )
+        run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_eload_dir),
+                                  self.test_run_dir)
+        # assert results
+        tasks = ['vcf_check', 'metadata_check', 'structural_variant_check', 'naming_convention_check']
+        self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                                           f'.ELOAD_{self.eload_number}_config.yml'),
+                                              tasks=tasks)
+        tasks.remove('metadata_check')
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
+
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
         copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
@@ -127,9 +163,11 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
         'naming_convention_check'
     ]):
         # Check that the eva-sub-cli output file have been copied to the 13_validation folder
-        report_txt = os.path.join(eload_folder, '13_validation', 'eva_sub_cli', 'validation_output', 'report.txt')
+        report_txt = os.path.join(eload_folder, '13_validation', 'eva_sub_cli', 'validation_submission_dir',
+                                  'validation_output', 'report.txt')
         assert os.path.isfile(report_txt)
-        result_yaml = os.path.join(eload_folder, '13_validation', 'eva_sub_cli', 'validation_results.yaml')
+        result_yaml = os.path.join(eload_folder, '13_validation', 'eva_sub_cli', 'validation_submission_dir',
+                                   'validation_results.yaml')
         assert os.path.isfile(result_yaml)
         with open(result_yaml) as open_file:
             cli_results = yaml.safe_load(open_file)

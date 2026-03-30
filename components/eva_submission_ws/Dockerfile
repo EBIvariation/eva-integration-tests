@@ -5,7 +5,7 @@ RUN apt update && apt -qq install -y git maven
 COPY maven-settings.xml /root
 
 # make manager app available
-COPY tomcat-users.xml /usr/local/tomcat/conf/
+COPY eva_submission_ws/tomcat-users.xml /usr/local/tomcat/conf/
 RUN cp -avT /usr/local/tomcat/webapps.dist/manager /usr/local/tomcat/webapps/manager \
  && sed -i 's|<Valve className="org.apache.catalina.valves.RemoteAddrValve".*|<!-- Removed RemoteAddrValve for all IP access -->|' /usr/local/tomcat/webapps/manager/META-INF/context.xml
 
