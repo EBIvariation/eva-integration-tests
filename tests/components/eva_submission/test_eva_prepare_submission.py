@@ -54,11 +54,12 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
 
         with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
             query = (
-                f"select submission_id, eload from eva_submissions.submission_eload where eload = {self.eload_number}")
+                f"select submission_id, eload, source from eva_submissions.submission_eload where eload = {self.eload_number}")
             results = get_all_results_for_query(metadata_connection_handle, query)
             assert len(results) == 1
             assert results[0][0] == submission_id
             assert results[0][1] == self.eload_number
+            assert results[0][2] == "email"
 
             query = (f"select submission_id from eva_submissions.submission where submission_id = '{submission_id}'")
             results = get_all_results_for_query(metadata_connection_handle, query)
@@ -85,6 +86,15 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         assert os.path.isfile(eload_config_yml)
         config = Configuration(eload_config_yml)
         assert config['submission']['submission_id'] == self.submission_id
+
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
+            query = (
+                f"select submission_id, eload, source from eva_submissions.submission_eload where eload = {self.eload_number}")
+            results = get_all_results_for_query(metadata_connection_handle, query)
+            assert len(results) == 1
+            assert results[0][0] == self.submission_id
+            assert results[0][1] == self.eload_number
+            assert results[0][2] == "eva-sub-cli"
 
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
