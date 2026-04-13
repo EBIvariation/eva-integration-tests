@@ -327,6 +327,26 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
             for result in results:
                 assert result[0] == 'Completed'
 
+            clustered_variant_update_query = (
+                f"SELECT source FROM evapro.clustered_variant_update "
+                f"WHERE assembly_accession='{self.target_assembly}'"
+                f"AND taxonomy_id='{self.taxonomy}'"
+
+            )
+            results = get_all_results_for_query(conn, clustered_variant_update_query)
+            assert len(results) == 2
+            assert ['GCA_000003055.5', 'GCA_002263795.2'] == sorted([row[0] for row in results])
+
+            clustered_variant_update_query = (
+                f"SELECT source FROM evapro.clustered_variant_update "
+                f"WHERE assembly_accession='{self.target_assembly}'"
+                f"AND taxonomy_id='{associated_taxonomy}'"
+
+            )
+            results = get_all_results_for_query(conn, clustered_variant_update_query)
+            assert len(results) == 1
+            assert ['GCA_002263795.2'] == sorted([row[0] for row in results])
+
         # Contig alias should contain the new assembly
         contig_alias_client = ContigAliasClient(get_contig_alias_db_creds_for_profile(self.maven_profile, self.maven_settings_file)[0])
         assembly = contig_alias_client.assembly(self.target_assembly)

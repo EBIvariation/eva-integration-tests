@@ -823,7 +823,7 @@ GRANT ALL ON TABLE evapro.study_browser TO metadata_db_user;
 
 --- table (clustered_variant_update)
 CREATE TABLE evapro.clustered_variant_update (
-        clustered_update_id INTEGER NOT NULL,
+        clustered_update_id serial4 NOT NULL,
         taxonomy_id INTEGER NOT NULL,
         assembly_accession VARCHAR NOT NULL,
         source TEXT NOT NULL,
