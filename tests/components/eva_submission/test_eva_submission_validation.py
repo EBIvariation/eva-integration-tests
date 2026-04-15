@@ -3,6 +3,8 @@ import shutil
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container
 from utils.test_utils import run_quiet_command
@@ -23,6 +25,9 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
     container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
     container_eload_dir = '/opt/submissions'
+
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
 
     def setUp(self):
         super().setUp()
@@ -60,10 +65,16 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
                                   os.path.join(self.container_eload_dir),
                                   self.test_run_dir)
         # assert results
-        self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                                           f'.ELOAD_{self.eload_number}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                         f'.ELOAD_{self.eload_number}_config.yml')
+        self.assert_validation_pass_in_config(eload_config_file)
 
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'SUCCESS')
 
     @log_on_failure
     def test_validation_with_tasks(self):
@@ -88,11 +99,17 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
                                   os.path.join(self.container_eload_dir),
                                   self.test_run_dir)
         # assert results
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                         f'.ELOAD_{self.eload_number}_config.yml')
+
         tasks = ['metadata_check', 'structural_variant_check']
-        self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                                           f'.ELOAD_{self.eload_number}_config.yml'),
-                                              tasks=tasks)
+        self.assert_validation_pass_in_config(eload_config_file, tasks=tasks)
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'FAILURE')
 
     @log_on_failure
     def test_validation_tasks_results_are_not_overwritten(self):
@@ -123,12 +140,17 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
                                   os.path.join(self.container_eload_dir),
                                   self.test_run_dir)
         # assert results
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                         f'.ELOAD_{self.eload_number}_config.yml')
         tasks = ['vcf_check', 'metadata_check', 'structural_variant_check', 'naming_convention_check']
-        self.assert_validation_pass_in_config(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                                           f'.ELOAD_{self.eload_number}_config.yml'),
-                                              tasks=tasks)
+        self.assert_validation_pass_in_config(eload_config_file, tasks=tasks)
         tasks.remove('metadata_check')
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
@@ -179,3 +201,12 @@ class TestEvaSubmissionValidation(TestWithDockerCompose):
             metadata_report_path = cli_results['metadata_check']['json_report_path'].replace(
                 self.container_eload_dir, self.test_run_dir)
             assert os.path.isfile(metadata_report_path)
+
+    def assert_submission_processing_status_updated(self, submission_id, status):
+        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
+        with metadata_connection_handle:
+            submission_status_query = (f"SELECT status FROM eva_submissions.submission_processing_status "
+                                       f"where submission_id = '{submission_id}' and step = 'VALIDATION'")
+            results = get_all_results_for_query(metadata_connection_handle, submission_status_query)
+            assert len(results) == 1
+            assert results[0][0] == status

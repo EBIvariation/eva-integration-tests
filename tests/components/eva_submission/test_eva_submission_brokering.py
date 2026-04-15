@@ -4,6 +4,8 @@ import shutil
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container
 from utils.test_utils import run_quiet_command
@@ -26,6 +28,9 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
     container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
     container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
     container_eload_dir = '/opt/submissions'
+
+    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
+    maven_profile = 'localhost'
 
     def setUp(self):
         self.webin_username = os.environ.get('EVA_SUBMISSION_WEBIN_USERNAME')
@@ -88,8 +93,14 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
                                   self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}', f'.ELOAD_{self.eload_number1}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}',
+                                         f'.ELOAD_{self.eload_number1}_config.yml')
+        self.assert_brokering_pass_in_config(eload_config_file)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'SUCCESS')
 
     @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
@@ -158,8 +169,14 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
                                   self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number4}', f'.ELOAD_{self.eload_number4}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number4}',
+                                         f'.ELOAD_{self.eload_number4}_config.yml')
+        self.assert_brokering_pass_in_config(eload_config_file)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'SUCCESS')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Get the config file from the container and update the username and password for Webin
@@ -227,3 +244,12 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         # ENA brokering passes
         assert config.query('brokering', 'ena', 'pass') is True
         assert config.query('brokering', 'ena', 'PROJECT', ret_default='').startswith('PRJE')
+
+    def assert_submission_processing_status_updated(self, submission_id, status):
+        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
+        with metadata_connection_handle:
+            submission_status_query = (f"SELECT status FROM eva_submissions.submission_processing_status "
+                                       f"where submission_id = '{submission_id}' and step = 'BROKERING'")
+            results = get_all_results_for_query(metadata_connection_handle, submission_status_query)
+            assert len(results) == 1
+            assert results[0][0] == status

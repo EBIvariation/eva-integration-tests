@@ -5,7 +5,7 @@ import yaml
 from ebi_eva_common_pyutils.config import Configuration
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
-from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container, \
     run_command_in_container
@@ -35,6 +35,10 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
 
     maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
     maven_profile = 'localhost'
+
+    # same as in tests/resources/.ELOAD_number_post_brokering.yml
+    submission_id = '43092992-2a33-4f98-a854-88322558f9c2'
+    submission_account_id = "test_submission_account"
 
     def setUp(self):
         super().setUp()
@@ -70,8 +74,13 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
 
         # assert results
-        self.assert_ingestion_archive_only(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
+        self.assert_ingestion_archive_only(eload_config_file)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'FAILURE')
 
     @log_on_failure
     def test_ingestion_variant_load_and_accession(self):
@@ -87,8 +96,13 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
 
         # assert results
-        self.assert_ingestion_variant_load_and_accession(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
+        self.assert_ingestion_variant_load_and_accession(eload_config_file)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Prepare reference genome
@@ -118,6 +132,20 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         yaml_content = read_file_from_container(self.container_name, os.path.join('/root', '.submission_config.yml'))
         submission_config = yaml.safe_load(yaml_content)
         run_command_in_container(self.container_name, f"mkdir -p {submission_config['public_ftp_dir']}")
+
+        # insert data in eva-submission-ws tables
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
+            # insert submission account
+            submission_account_query = (
+                f"INSERT INTO eva_submissions.submission_account (id, first_name, last_name, login_type, primary_email, user_id) "
+                f"VALUES('{self.submission_account_id}', 'Test', 'User', 'webin', 'test-user@email.com', '{self.submission_account_id}')")
+            execute_query(metadata_connection_handle, submission_account_query)
+
+            # insert submission
+            submission_query = (
+                f"INSERT INTO eva_submissions.submission (submission_id, completion_time, initiation_time, status, upload_url, uploaded_time, submission_account_id) "
+                f"VALUES('{self.submission_id}', NULL, '2025-05-21 18:43:25.384', 'UPLOADED', 'test-upload-url', '2025-05-21 19:10:30.232', '{self.submission_account_id}')")
+            execute_query(metadata_connection_handle, submission_query)
 
     def assert_ingestion_archive_only(self, eload_config_yml):
         # Check that the config file exists
@@ -374,3 +402,12 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
             accessioned_variants_count = sve_coll.count_documents(
                 {'seq': 'GCA_000002945.2', 'study': 'PRJEB105137', 'tax': 4896})
             assert accessioned_variants_count == 4
+
+    def assert_submission_processing_status_updated(self, submission_id, status):
+        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
+        with metadata_connection_handle:
+            submission_status_query = (f"SELECT status FROM eva_submissions.submission_processing_status "
+                                       f"where submission_id = '{submission_id}' and step = 'INGESTION'")
+            results = get_all_results_for_query(metadata_connection_handle, submission_status_query)
+            assert len(results) == 1
+            assert results[0][0] == status
