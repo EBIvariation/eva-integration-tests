@@ -77,6 +77,7 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
             # - (PRJEB29734, 9913, GCA_000003055.5)
             # - (PRJEB42513, 9913, GCA_002263795.2)
             # - (PRJEB42510, 9903, GCA_002263795.2)
+            # - (PRJEB30734, 9913, GCA_002263795.4)  <-- This is the target assembly
             execute_query(conn,
                           "INSERT INTO evapro.project "
                           "(project_accession, center_name, alias, title, description, scope, material, type, "
@@ -86,6 +87,8 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                           "('PRJEB42513', 'Test Centre', 'ELOAD_2', 'Test Study', 'Test description', "
                           "'Multi-isolate', 'DNA', 'Study', 4, 1), "
                           "('PRJEB42510', 'Test Centre', 'ELOAD_3', 'Test Study', 'Test description', "
+                          "'Multi-isolate', 'DNA', 'Study', 4, 1), "
+                          "('PRJEB30734', 'Test Centre', 'ELOAD_4', 'Test Study', 'Test description', "
                           "'Multi-isolate', 'DNA', 'Study', 4, 1)"
                           "ON CONFLICT DO NOTHING"
                           )
@@ -97,14 +100,24 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                           )
             execute_query(conn,
                           "INSERT INTO evapro.project_taxonomy (project_accession, taxonomy_id) "
-                          "VALUES ('PRJEB29734', 9913), ('PRJEB42513', 9913), ('PRJEB42510', 9903) "
+                          "VALUES ('PRJEB29734', 9913), ('PRJEB42513', 9913), ('PRJEB42510', 9903), "
+                          "('PRJEB30734', 9913) "
                           "ON CONFLICT DO NOTHING"
                           )
             execute_query(conn,
                           "INSERT INTO evapro.assembly_set (taxonomy_id, assembly_name, assembly_code) "
                           "VALUES (9913, 'Bos_taurus_UMD_3.1.1', 'umd311'), "
                           "(9913, 'ARS-UCD1.2', 'arsucd12'), "
-                          "(9903, 'ARS-UCD1.2', 'arsucd12') "
+                          "(9903, 'ARS-UCD1.2', 'arsucd12'), "
+                          "(9913, 'ARS-UCD2.0', 'arsucd20') "
+                          "ON CONFLICT DO NOTHING"
+                          )
+            execute_query(conn,
+                          "INSERT INTO evapro.accessioned_assembly (assembly_set_id, assembly_accession, assembly_chain, assembly_version) "
+                          "VALUES (1, 'GCA_000003055.5', 'GCA_000003055', 5), "
+                          "(2, 'GCA_002263795.2', 'GCA_002263795', 2), "
+                          "(3, 'GCA_002263795.2', 'GCA_002263795', 2), "
+                          "(4, 'GCA_002263795.4', 'GCA_002263795', 4) "
                           "ON CONFLICT DO NOTHING"
                           )
             execute_query(conn,
@@ -112,12 +125,14 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
                           "(analysis_accession, title, alias, vcf_reference_accession, hidden_in_eva, assembly_set_id) "
                           "VALUES ('ERZ123', 'Test Analysis', 'test_analysis', 'GCA_000003055.5', 0, 1), "
                           "('ERZ456', 'Test Analysis', 'test_analysis', 'GCA_002263795.2', 0, 2), "
-                          "('ERZ789', 'Test Analysis', 'test_analysis', 'GCA_002263795.2', 0, 3) "
+                          "('ERZ789', 'Test Analysis', 'test_analysis', 'GCA_002263795.2', 0, 3), "
+                          "('ERZ1011', 'Test Analysis', 'test_analysis', 'GCA_002263795.4', 0, 4) "
                           "ON CONFLICT DO NOTHING"
                           )
             execute_query(conn,
                           "INSERT INTO evapro.project_analysis (project_accession, analysis_accession) "
-                          "VALUES ('PRJEB29734', 'ERZ123'), ('PRJEB42513', 'ERZ456'), ('PRJEB42510', 'ERZ789') "
+                          "VALUES ('PRJEB29734', 'ERZ123'), ('PRJEB42513', 'ERZ456'), ('PRJEB42510', 'ERZ789'), "
+                          "('PRJEB30734', 'ERZ1011') "
                           "ON CONFLICT DO NOTHING"
                           )
             # dbSNP source assemblies come from release 3 in tracker
@@ -314,16 +329,18 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
             for result in results:
                 assert result[0] == self.target_assembly
 
-            # Remapping tracker should contain 4 completed jobs:
-            # - 2 source assemblies for EVA, including 1 with an additional taxonomy
+            # Remapping tracker should contain 5 completed jobs:
             # - 1 source assembly for dbSNP
+            # - 2 source assemblies for EVA (Bos Taurus)
+            # - 1 source assemblies for EVA (Bos)
+            # - 1 source assemblies for EVA that is also the target assembly
             remapping_tracker_query = (
                 f"SELECT remapping_status FROM eva_progress_tracker.remapping_tracker "
                 f"WHERE release_version={self.release_version} "
                 f"AND assembly_accession='{self.target_assembly}'"
             )
             results = get_all_results_for_query(conn, remapping_tracker_query)
-            assert len(results) == 4
+            assert len(results) == 5
             for result in results:
                 assert result[0] == 'Completed'
 
@@ -334,8 +351,8 @@ class TestEvaAssemblyIngestion(TestWithDockerCompose):
 
             )
             results = get_all_results_for_query(conn, clustered_variant_update_query)
-            assert len(results) == 2
-            assert ['GCA_000003055.5', 'GCA_002263795.2'] == sorted([row[0] for row in results])
+            assert len(results) == 3
+            assert ['GCA_000003055.5', 'GCA_002263795.2', 'GCA_002263795.4'] == sorted([row[0] for row in results])
 
             clustered_variant_update_query = (
                 f"SELECT source FROM evapro.clustered_variant_update "
