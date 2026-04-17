@@ -7,34 +7,16 @@ from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_hand
 from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 
+from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container, \
     run_command_in_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
+from utils.test_with_docker_compose import log_on_failure
 
 
-class TestEvaSubmissionIngestion(TestWithDockerCompose):
-    vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
-    fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
-    assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
-
-    vcf_file = os.path.join(vcf_files_dir, 'vcf_file_ASM294v2.vcf')
+class TestEvaSubmissionIngestion(TestEvaSubmission):
+    vcf_file = os.path.join(TestEvaSubmission.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
     vcf_file_name = os.path.basename(vcf_file)
-
-    eload_config_file = os.path.join(TestWithDockerCompose.resources_directory, 'ELOAD_config.yml')
-
-    test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
-    metadata_xlsx = os.path.join(test_run_dir, 'metadata_xlsx.xlsx')
-    metadata_json = os.path.join(test_run_dir, 'eva_sub_cli_metadata.json')
-
-    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
-                                       'docker-compose-eva-submission.yml')
-    container_name = 'eva_submission_test'
-    container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
-    container_eload_dir = '/opt/submissions'
-
-    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
-    maven_profile = 'localhost'
 
     # same as in tests/resources/.ELOAD_number_post_brokering.yml
     submission_id = '43092992-2a33-4f98-a854-88322558f9c2'
@@ -42,7 +24,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
 
     def setUp(self):
         super().setUp()
-        self.container_log_files = []
+
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
@@ -80,7 +62,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         config = Configuration(eload_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
-        self.assert_submission_processing_status_updated(submission_id, 'FAILURE')
+        self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
     @log_on_failure
     def test_ingestion_variant_load_and_accession(self):
@@ -102,7 +84,7 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
         config = Configuration(eload_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
-        self.assert_submission_processing_status_updated(submission_id, 'FAILURE')
+        self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Prepare reference genome
@@ -402,12 +384,3 @@ class TestEvaSubmissionIngestion(TestWithDockerCompose):
             accessioned_variants_count = sve_coll.count_documents(
                 {'seq': 'GCA_000002945.2', 'study': 'PRJEB105137', 'tax': 4896})
             assert accessioned_variants_count == 4
-
-    def assert_submission_processing_status_updated(self, submission_id, status):
-        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
-        with metadata_connection_handle:
-            submission_status_query = (f"SELECT status FROM eva_submissions.submission_processing_status "
-                                       f"where submission_id = '{submission_id}' and step = 'INGESTION'")
-            results = get_all_results_for_query(metadata_connection_handle, submission_status_query)
-            assert len(results) == 1
-            assert results[0][0] == status

@@ -4,41 +4,22 @@ import shutil
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
-from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 
+from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
+from utils.test_with_docker_compose import log_on_failure
 
 
-class TestEvaSubmissionBrokering(TestWithDockerCompose):
-    vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
-    fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
-    assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
-
-    test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
-    metadata_xlsx = os.path.join(test_run_dir, 'metadata_xlsx.xlsx')
-    old_metadata_xlsx = os.path.join(test_run_dir, 'old_metadata_xlsx.xlsx')
-    metadata_json = os.path.join(test_run_dir, 'eva_sub_cli_metadata.json')
-
-    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
-                                       'docker-compose-eva-submission.yml')
-    container_name = 'eva_submission_test'
-    container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
-    container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
-    container_eload_dir = '/opt/submissions'
-
-    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
-    maven_profile = 'localhost'
-
+class TestEvaSubmissionBrokering(TestEvaSubmission):
     def setUp(self):
         self.webin_username = os.environ.get('EVA_SUBMISSION_WEBIN_USERNAME')
         self.webin_password = os.environ.get('EVA_SUBMISSION_WEBIN_PASSWORD')
         if not self.webin_username or not self.webin_password:
             self.fail('EVA_SUBMISSION_WEBIN_USERNAME or EVA_SUBMISSION_WEBIN_PASSWORD not set')
+
         super().setUp()
-        self.container_log_files = []
+
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
@@ -100,7 +81,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         config = Configuration(eload_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
-        self.assert_submission_processing_status_updated(submission_id, 'SUCCESS')
+        self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
 
     @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
@@ -176,7 +157,7 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         config = Configuration(eload_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
-        self.assert_submission_processing_status_updated(submission_id, 'SUCCESS')
+        self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Get the config file from the container and update the username and password for Webin
@@ -244,12 +225,3 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
         # ENA brokering passes
         assert config.query('brokering', 'ena', 'pass') is True
         assert config.query('brokering', 'ena', 'PROJECT', ret_default='').startswith('PRJE')
-
-    def assert_submission_processing_status_updated(self, submission_id, status):
-        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
-        with metadata_connection_handle:
-            submission_status_query = (f"SELECT status FROM eva_submissions.submission_processing_status "
-                                       f"where submission_id = '{submission_id}' and step = 'BROKERING'")
-            results = get_all_results_for_query(metadata_connection_handle, submission_status_query)
-            assert len(results) == 1
-            assert results[0][0] == status
