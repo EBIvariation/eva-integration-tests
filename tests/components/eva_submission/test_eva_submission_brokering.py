@@ -5,35 +5,21 @@ import shutil
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
 
+from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
+from utils.test_with_docker_compose import log_on_failure
 
 
-class TestEvaSubmissionBrokering(TestWithDockerCompose):
-    vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
-    fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
-    assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
-
-    test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
-    metadata_xlsx = os.path.join(test_run_dir, 'metadata_xlsx.xlsx')
-    old_metadata_xlsx = os.path.join(test_run_dir, 'old_metadata_xlsx.xlsx')
-    metadata_json = os.path.join(test_run_dir, 'eva_sub_cli_metadata.json')
-
-    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
-                                       'docker-compose-eva-submission.yml')
-    container_name = 'eva_submission_test'
-    container_reference_genome_dir = '/opt/reference_sequences/nitrospira/GCA_000002945.2'
-    container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
-    container_eload_dir = '/opt/submissions'
-
+class TestEvaSubmissionBrokering(TestEvaSubmission):
     def setUp(self):
         self.webin_username = os.environ.get('EVA_SUBMISSION_WEBIN_USERNAME')
         self.webin_password = os.environ.get('EVA_SUBMISSION_WEBIN_PASSWORD')
         if not self.webin_username or not self.webin_password:
             self.fail('EVA_SUBMISSION_WEBIN_USERNAME or EVA_SUBMISSION_WEBIN_PASSWORD not set')
+
         super().setUp()
-        self.container_log_files = []
+
         # create metadata xlsx file
         shutil.copyfile(
             os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
@@ -88,8 +74,14 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
                                   self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}', f'.ELOAD_{self.eload_number1}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}',
+                                         f'.ELOAD_{self.eload_number1}_config.yml')
+        self.assert_brokering_pass_in_config(eload_config_file)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
 
     @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
@@ -158,8 +150,14 @@ class TestEvaSubmissionBrokering(TestWithDockerCompose):
                                   self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number4}', f'.ELOAD_{self.eload_number4}_config.yml'))
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number4}',
+                                         f'.ELOAD_{self.eload_number4}_config.yml')
+        self.assert_brokering_pass_in_config(eload_config_file)
+
+        config = Configuration(eload_config_file)
+        submission_id = config.query('submission', 'submission_id')
+        assert submission_id is not None
+        self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Get the config file from the container and update the username and password for Webin

@@ -9,6 +9,8 @@ brokering:
         : csi: /opt/submissions/ELOAD_{ELOAD_number}/18_brokering/ena/vcf_file_ASM294v2.vcf.gz.csi
           csi_md5: 415c2d2180aefafa6d0d876b43945c45
           md5: aac3fe9bd86b3c5b4f5585f22f9e47ea
+          original_vcf: /opt/submissions/ELOAD_{ELOAD_number}/10_submitted/vcf_files/vcf_file_ASM294v2.vcf.gz
+          output_vcf_file: /opt/submissions/ELOAD_{ELOAD_number}/18_brokering/ena/vcf_file_ASM294v2.vcf.gz
   ena:
     ANALYSIS:
       ELOAD_{ELOAD_number}_AA: ERZ28769990
@@ -18,6 +20,7 @@ validation:
     analyses:
       ELOAD_{ELOAD_number}_AA: none
 submission:
+  submission_id: 43092992-2a33-4f98-a854-88322558f9c2
   analyses:
     ELOAD_{ELOAD_number}_AA:
       assembly_accession: GCA_000002945.2
