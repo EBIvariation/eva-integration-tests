@@ -7,9 +7,6 @@ if [[ -z "$SOURCE_GITHUB_REPOSITORY" ]] ; then SOURCE_GITHUB_REPOSITORY=EBIvaria
 if [[ -z "$SOURCE_GITHUB_REF" ]] ; then SOURCE_GITHUB_REF=master ; fi
 if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; fi
 
-SOURCE_GITHUB_REPOSITORY=nitin-ebi/eva-submission
-SOURCE_GITHUB_REF=update-submission-processing-status
-
 echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
 git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-submission
