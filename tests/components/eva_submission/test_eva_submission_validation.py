@@ -126,7 +126,6 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
                                          f'.ELOAD_{self.eload_number}_config.yml')
         tasks = ['vcf_check', 'metadata_check', 'structural_variant_check', 'naming_convention_check']
         self.assert_validation_pass_in_config(eload_config_file, tasks=tasks)
-        tasks.remove('metadata_check')
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
 
         config = Configuration(eload_config_file)
