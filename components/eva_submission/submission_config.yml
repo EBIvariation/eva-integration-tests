@@ -24,8 +24,8 @@ maven:
   settings_file: /root/maven-settings.xml
 
 executable:
-  eva_sub_cli: eva-sub-cli.py
-  sub_cli_env: /dev/null
+  eva_sub_cli: /opt/eva-sub-cli/python/bin/eva-sub-cli.py
+  sub_cli_env: /opt/eva-sub-cli/python/bin/activate
   nextflow: /usr/local/bin/nextflow
   vcf_assembly_checker: /usr/local/bin/vcf_assembly_checker
   vcf_validator: /usr/local/bin/vcf_validator

@@ -31,7 +31,7 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 RUN apt update && apt -qq install -y maven
 
 # install Python
-RUN apt update && apt -qq install -y python3.10 python3-pip python3.10-dev \
+RUN apt update && apt -qq install -y python3.10 python3-pip python3.10-dev python3.10-venv \
     && ln -sf /usr/bin/python3.10 /usr/bin/python \
     && ln -sf /usr/bin/pip3 /usr/bin/pip
 
@@ -61,7 +61,13 @@ RUN curl -L  "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_V
 
 
 # Install eva-sub-cli
-RUN git clone https://github.com/EBIvariation/eva-sub-cli.git eva-sub-cli && cd eva-sub-cli && python -m pip -q install . && cd ..
+RUN git clone https://github.com/EBIvariation/eva-sub-cli.git eva-sub-cli \
+    && cd eva-sub-cli \
+    && python -m venv python \
+    && python/bin/pip install -U pip \
+    && python/bin/pip install -q . \
+    && cd ..
+
 
 RUN mkdir -p /opt/ftp/private/eva-box-01/upload/username
 
