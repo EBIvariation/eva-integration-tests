@@ -118,12 +118,12 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
         return json_metadata
 
     def get_submission_json_metadata_existing_project(self):
-        json_metadata = self.get_validation_json_metadata_existing_project()
+        json_metadata = self.get_validation_json_metadata_existing_project('PRJEB12770')
         json_metadata = self.add_files(json_metadata)
         return json_metadata
 
     def get_submission_json_metadata_existing_project_no_taxid_biosample(self):
-        json_metadata = self.get_validation_json_metadata_existing_project()
+        json_metadata = self.get_validation_json_metadata_existing_project('PRJEB90338')
         json_metadata = self.add_files(json_metadata)
         json_metadata['sample'] =  [
             {
