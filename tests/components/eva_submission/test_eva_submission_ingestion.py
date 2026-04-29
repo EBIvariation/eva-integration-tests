@@ -384,10 +384,9 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
 
             annotation_metadata_coll = variant_database["annotationMetadata_2_0"]
             annotation_metadata_total_count = annotation_metadata_coll.count_documents({})
-            annotation_metadata_docs = annotation_metadata_coll.find({})
             assert annotation_metadata_total_count == 1
             annotation_metadata_count = annotation_metadata_coll.count_documents(
-                {"cacheVersion": "62", "vepVersion": "115", "defaultVersion": True})
+                {"cachev": "62", "vepv": "115", "is_default": True})
             assert annotation_metadata_count == 1
 
             accession_database = mongo_conn["eva_accession_sharded"]
