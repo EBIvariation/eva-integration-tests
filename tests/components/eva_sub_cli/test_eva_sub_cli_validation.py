@@ -121,7 +121,7 @@ class TestEvaSubCliValidation(TestEvaSubCli):
     @log_on_failure
     def test_docker_validator_with_json_existing_project(self):
         # create metadata json file and copy to container
-        sub_metadata = self.get_validation_json_metadata_existing_project()
+        sub_metadata = self.get_validation_json_metadata_existing_project('PRJEB12770')
         with open(self.metadata_json, 'w') as open_metadata:
             json.dump(sub_metadata, open_metadata)
         copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)

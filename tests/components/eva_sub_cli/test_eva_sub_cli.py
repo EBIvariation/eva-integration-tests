@@ -48,9 +48,9 @@ class TestEvaSubCli(TestWithDockerCompose):
                 file_path = os.path.join(directory, file)
                 copy_files_to_container(self.container_name, self.container_submission_dir, file_path)
 
-    def get_validation_json_metadata_existing_project(self):
+    def get_validation_json_metadata_existing_project(self, project_accession):
         json_metadata = self.get_validation_json_metadata()
-        json_metadata['project'] = {'projectAccession': 'PRJEB12770'}
+        json_metadata['project'] = {'projectAccession': project_accession}
         return json_metadata
 
     def get_validation_json_metadata_with_non_vcf_file(self):
