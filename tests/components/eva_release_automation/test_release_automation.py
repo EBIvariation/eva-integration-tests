@@ -165,9 +165,10 @@ class TestRunReleaseForSpecies(TestWithDockerCompose):
     @log_on_failure
     def test_publish_release_to_ftp_uses_hard_links(self):
         assembly_accession = 'GCA_000005425.2'
+        release_folder = 'oryza_sativa'
         fasta_file = '/opt/tests/release_automation/resources/GCA_000005425.2.fa'
         report_file = '/opt/tests/release_automation/resources/GCA_000005425.2_assembly_report.txt'
-        container_v1_dir = f'{self.container_release_dir}/ftp/release_1/by_assembly/{assembly_accession}'
+        container_v1_dir = f'{self.container_release_dir}/ftp/release_1/by_species/{release_folder}/{assembly_accession}'
         release_filenames = [
             f'4530_{assembly_accession}_current_ids.vcf.gz',
             f'4530_{assembly_accession}_current_ids.vcf.gz.csi',
@@ -191,7 +192,7 @@ class TestRunReleaseForSpecies(TestWithDockerCompose):
                           "(taxonomy, scientific_name, assembly_accession, release_version, sources, fasta_path, "
                           "report_path, should_be_released, num_rs_to_release, total_num_variants, release_folder_name) "
                           f"VALUES (4530, 'Oryza sativa', '{assembly_accession}', 2, 'EVA', '{fasta_file}', "
-                          f"'{report_file}', False, 0, 1, 'oryza_sativa')")
+                          f"'{report_file}', False, 0, 1, '{release_folder}')")
 
         # Publish release v2 — should hard-link from v1
         run_command_in_container(
@@ -200,8 +201,8 @@ class TestRunReleaseForSpecies(TestWithDockerCompose):
             '--release_version 2 --taxonomy_id 4530'
         )
 
-        v1_dir = os.path.join(self.test_run_dir, 'ftp', 'release_1', 'by_assembly', assembly_accession)
-        v2_dir = os.path.join(self.test_run_dir, 'ftp', 'release_2', 'by_assembly', assembly_accession)
+        v1_dir = os.path.join(self.test_run_dir, 'ftp', 'release_1', 'by_species', release_folder, assembly_accession)
+        v2_dir = os.path.join(self.test_run_dir, 'ftp', 'release_2', 'by_species', release_folder, assembly_accession)
         for filename in release_filenames:
             v1_file = os.path.join(v1_dir, filename)
             v2_file = os.path.join(v2_dir, filename)
