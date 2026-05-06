@@ -65,11 +65,20 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
     @log_on_failure
-    def test_ingestion_variant_load_and_accession(self):
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
-        self.container_log_files.append((self.container_name, log_file))
+    def test_ingestion_variant_load_idempotent(self):
+        log_file1 = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion_first.out'
+        self.container_log_files.append((self.container_name, log_file1))
         ingestion_cmd = (
-            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks metadata_load variant_load accession > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks metadata_load variant_load accession > {log_file1} '"
+        )
+        # Run ingestion from command line
+        run_quiet_command("run eva_submission ingest_submission script for variant_load and accession", ingestion_cmd)
+
+        log_file2 = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion_second.out'
+        self.container_log_files.append((self.container_name, log_file2))
+        # Run a second time but only the variant load
+        ingestion_cmd = (
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks variant_load > {log_file2} 2>&1'"
         )
         # Run ingestion from command line
         run_quiet_command("run eva_submission ingest_submission script for variant_load and accession", ingestion_cmd)
@@ -78,7 +87,8 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
 
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                         f'.ELOAD_{self.eload_number}_config.yml')
         self.assert_ingestion_variant_load_and_accession(eload_config_file)
 
         config = Configuration(eload_config_file)
@@ -376,7 +386,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             annotation_metadata_total_count = annotation_metadata_coll.count_documents({})
             assert annotation_metadata_total_count == 1
             annotation_metadata_count = annotation_metadata_coll.count_documents(
-                {"cacheVersion": "62", "vepVersion": "115", "defaultVersion": True})
+                {"cachev": "62", "vepv": "115", "is_default": True})
             assert annotation_metadata_count == 1
 
             accession_database = mongo_conn["eva_accession_sharded"]
