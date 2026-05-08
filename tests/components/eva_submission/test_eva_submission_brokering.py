@@ -63,7 +63,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number1}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --eload {self.eload_number1} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --debug --eload {self.eload_number1} > {log_file} 2>&1'"
         )
         # Run brokering from command line
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
