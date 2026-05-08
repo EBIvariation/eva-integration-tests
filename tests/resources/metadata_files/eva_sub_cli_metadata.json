@@ -8,7 +8,7 @@
     "centre": "test_user_centre"
   }],
   "project": {
-    "title": "test_project_title",
+    "title": "test_project_title_a_bit_longer",
     "description": "test_project_description",
     "centre": "test_project_centre",
     "taxId": 1234
