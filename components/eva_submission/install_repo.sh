@@ -9,6 +9,9 @@ if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; f
 
 echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
+# TODO: revert after testing
+SOURCE_GITHUB_REF=java-21
+
 git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-submission
 cd eva-submission
 git checkout ${SOURCE_GITHUB_REF}
