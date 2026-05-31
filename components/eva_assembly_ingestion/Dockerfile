@@ -42,7 +42,8 @@ RUN curl -fsSL "https://github.com/nextflow-io/nextflow/releases/download/v${NXF
     && nextflow -version
 
 # Install eva-submission
-RUN git clone --single-branch https://github.com/EBIvariation/eva-submission.git eva-submission && cd eva-submission && python -m pip -q install . && cd ..
+# TODO: revert after testing
+RUN git clone --single-branch --branch java-21 https://github.com/EBIvariation/eva-submission.git eva-submission && cd eva-submission && python -m pip -q install . && cd ..
 
 # Install variant-remapping (needs a virtual environment)
 RUN git clone https://github.com/EBIvariation/variant-remapping.git variant-remapping \
