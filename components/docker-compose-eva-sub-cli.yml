@@ -13,6 +13,7 @@ services:
         SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
     container_name: eva_sub_cli_test
     environment:
+      SUBMISSION_WS_VAR: http://eva-submission-ws:8080/
       SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
     command: tail -f /dev/null
     volumes:

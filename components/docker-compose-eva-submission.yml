@@ -1,4 +1,5 @@
 
+
 services:
   eva_submission:
     image: eva_submission_test
@@ -11,6 +12,9 @@ services:
         SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
         SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
     container_name: eva_submission_test
+    environment:
+      SUBMISSION_WS_VAR: http://eva-submission-ws:8080/
+      SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
