@@ -87,6 +87,7 @@ class TestEvaSubCli(TestWithDockerCompose):
 
     def get_validation_json_metadata(self):
         return {
+            "$schema": "https://raw.githubusercontent.com/EBIvariation/eva-sub-cli/refs/tags/v0.6.1/eva_sub_cli/etc/eva_schema.json",
             "submitterDetails": [
                 {
                     "firstName": "test_user_first_name",
