@@ -10,15 +10,15 @@ Each directory under `components/` represents one Docker image. Components fall 
 
 ### Real components: cloned from upstream source at build time
 
-| Component | Source repository | Description |
-|-----------|------------------|-------------|
-| `eva_submission` | EBIvariation/eva-submission | Python + Nextflow end-to-end submission pipeline (validation, brokering, accession, ingestion) |
-| `eva_sub_cli` | EBIvariation/eva-sub-cli | Python CLI used by external submitters |
-| `eva_submission_ws` | EBIvariation/eva-submission-ws | Spring Boot REST API that coordinates submissions |
-| `eva_ws` | EBIvariation/eva-ws | Spring Boot count-statistics REST API |
-| `contig_alias_ws` | EBIvariation/contig-alias | Spring Boot contig-alias REST API |
-| `eva_assembly_ingestion` | EBIvariation/eva-assembly-ingestion | Python + Nextflow assembly ingestion pipeline |
-| `eva_release_automation` | EBIvariation/eva-release-automation | Python release automation pipeline and FTP publishing |
+| Component | Source repository | Description                                                                                                    |
+|-----------|------------------|-----------------------------------------------------------------------------------------------------------------|
+| `eva_submission` | EBIvariation/eva-submission | Python + Nextflow end-to-end submission pipeline (validation, brokering, ingestion)|
+| `eva_sub_cli` | EBIvariation/eva-sub-cli | Python CLI used by external submitters                                                              |
+| `eva_submission_ws` | EBIvariation/eva-submission-ws | Spring Boot REST API that coordinates submissions                                       |
+| `eva_ws` | EBIvariation/eva-ws | Spring Boot REST API containing most EVA webservies                                                           |
+| `contig_alias_ws` | EBIvariation/contig-alias | Spring Boot contig-alias REST API                                                              |
+| `eva_assembly_ingestion` | EBIvariation/eva-assembly-ingestion | Python + Nextflow assembly ingestion pipeline                                 |
+| `eva_release_automation` | EBIvariation/eva-release-automation | Python + Nextflow release automation pipeline and FTP publishing                         |
 
 Real components that have an `install_repo.sh` script support being built from any fork or branch via the `SOURCE_GITHUB_REPOSITORY`, `SOURCE_GITHUB_REF`, and `SOURCE_GITHUB_SHA` Docker build arguments (see [Running tests on a different branch](#running-tests-on-a-different-branch)).
 
@@ -31,12 +31,12 @@ Real components that have an `install_repo.sh` script support being built from a
 
 ### Infrastructure components
 
-| Component | Base image | Description |
-|-----------|-----------|-------------|
-| `postgres_db` | postgres:11 | Multi-schema metadata database. Initialises with 9 SQL scripts covering `evapro`, `eva_submissions`, `eva_progress_tracker`, `eva_stats`, `eva_tasks`, and the variant/accession join-tables |
-| `mongo_db` | mongo:6.0.24 | Sharded MongoDB cluster for variant entities (`submittedVariantEntity`, `clusteredVariantEntity`, etc.) |
-| `oracle_db` | gvenzl/oracle-free:slim | ERA legacy schema used by the submission brokering pipeline |
-| `mailhog` | mailhog | SMTP server + web UI that captures outbound emails sent during submission |
+| Component | Base image | Description                                                                          |
+|-----------|-----------|---------------------------------------------------------------------------------------|
+| `postgres_db` | postgres:11 | PostgreSQL database containing metadata, accessioning block and other schemas   |
+| `mongo_db` | mongo:6.0.24 | Sharded MongoDB cluster for variant warehouse and accessioning warehouse databases |
+| `oracle_db` | gvenzl/oracle-free:slim | ERA legacy schema used by the submission brokering pipeline           |
+| `mailhog` | mailhog | SMTP server + web UI that captures outbound emails sent during submission               |
 
 ---
 
@@ -163,10 +163,10 @@ Each upstream repository can trigger its own suite by posting a `repository_disp
 
 ### Required GitHub secrets
 
-| Secret | Used by                                       |
-|--------|-----------------------------------------------|
-| `EVA_SUBMISSION_WEBIN_USERNAME` | Submission brokering tests (real ENA account) |
-| `EVA_SUBMISSION_WEBIN_PASSWORD` | Submission brokering tests                    |
-| `WEBIN_TEST_USER_EMAIL` | Sub-CLI upload tests (ENA credentials)        |
-| `WEBIN_TEST_USER_PASSWORD` | Sub-CLI upload tests                          |
+| Secret | Used by                                     |
+|--------|---------------------------------------------|
+| `EVA_SUBMISSION_WEBIN_USERNAME` | Submission brokering tests  |
+| `EVA_SUBMISSION_WEBIN_PASSWORD` | Submission brokering tests  |
+| `WEBIN_TEST_USER_EMAIL` | Sub-CLI upload tests    |
+| `WEBIN_TEST_USER_PASSWORD` | Sub-CLI upload tests     |
 
