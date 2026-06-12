@@ -4,7 +4,7 @@ ARG SOURCE_GITHUB_REPOSITORY
 ARG SOURCE_GITHUB_REF
 ARG SOURCE_GITHUB_SHA
 
-ENV NXF_VER=22.04.0
+ENV NXF_VER=25.10.4
 
 
 WORKDIR /opt
@@ -13,17 +13,20 @@ WORKDIR /opt
 RUN apt update  \
     && apt -qq install -y tar zip unzip curl wget samtools bcftools tabix bedtools minimap2 rsync git build-essential
 
-# Install JAVA 8
-RUN apt update && apt -qq install -y openjdk-8-jdk \
+# Install JAVA 21
+RUN apt update && apt -qq install -y wget apt-transport-https gnupg \
+    && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /usr/share/keyrings/adoptium.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb bookworm main" > /etc/apt/sources.list.d/adoptium.list \
+    && apt update && apt -qq install -y temurin-21-jdk \
     && ARCH=$(dpkg --print-architecture) \
-    && update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/java 1 \
-    && update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/javac 1 \
-    && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/java \
-    && update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/javac \
-    && ln -sf /usr/lib/jvm/java-8-openjdk-${ARCH} /usr/lib/jvm/java-8-openjdk
+    && update-alternatives --install /usr/bin/java java /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/java 1 \
+    && update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/javac 1 \
+    && update-alternatives --set java /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/java \
+    && update-alternatives --set javac /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/javac \
+    && ln -sf /usr/lib/jvm/temurin-21-jdk-${ARCH} /usr/lib/jvm/temurin-21-jdk
 
-ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk
-ENV PATH="$JAVA_HOME/bin:$PATH"
+ENV JAVA_HOME=/usr/lib/jvm/temurin-21-jdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Install Maven
 RUN apt update && apt -qq install -y maven
@@ -34,11 +37,13 @@ RUN apt update && apt -qq install -y python3.10 python3-pip python3.10-dev pytho
     && ln -sf /usr/bin/pip3 /usr/bin/pip
 
 # Install nextflow
-RUN curl -L  "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
-    && mv nextflow /usr/local/bin/
+RUN curl -fsSL "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow" -o /usr/local/bin/nextflow \
+    && chmod +x /usr/local/bin/nextflow \
+    && nextflow -version
 
 # Install eva-submission
-RUN git clone https://github.com/EBIvariation/eva-submission.git eva-submission && cd eva-submission && python -m pip -q install . && cd ..
+# TODO: revert after testing
+RUN git clone --single-branch --branch java-21 https://github.com/EBIvariation/eva-submission.git eva-submission && cd eva-submission && python -m pip -q install . && cd ..
 
 # Install variant-remapping (needs a virtual environment)
 RUN git clone https://github.com/EBIvariation/variant-remapping.git variant-remapping \

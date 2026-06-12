@@ -1,4 +1,4 @@
-FROM tomcat:9.0-jdk11
+FROM tomcat:10.1-jdk21
 
 RUN apt update  \
     && apt install -y git maven
@@ -14,7 +14,7 @@ WORKDIR /usr/local/software
 
 # build and deploy mocked web-services
 RUN mvn package -f mocked_web_services/pom.xml
-RUN cp mocked_web_services/target/mocked_web_services-*.war.original /usr/local/tomcat/webapps/mocked_web_services.war
+RUN cp mocked_web_services/target/mocked_web_services-*.war /usr/local/tomcat/webapps/mocked_web_services.war
 
 EXPOSE 8080
 

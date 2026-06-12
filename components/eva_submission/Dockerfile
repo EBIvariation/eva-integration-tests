@@ -5,7 +5,7 @@ ARG SOURCE_GITHUB_REF
 ARG SOURCE_GITHUB_SHA
 
 ENV vcf_validator_version=0.9.4
-ENV NXF_VER=22.04.0
+ENV NXF_VER=25.10.4
 ENV MONGOSH_VERSION=2.7.0
 
 
@@ -15,17 +15,20 @@ WORKDIR /opt
 RUN apt update  \
     && apt -qq install -y tar zip unzip curl wget samtools bcftools tabix bedtools minimap2 rsync git build-essential
 
-# Install JAVA 8 and Node
-RUN apt update && apt -qq install -y openjdk-8-jdk nodejs npm \
+# Install JAVA 21 and Node
+RUN apt update && apt -qq install -y wget apt-transport-https gnupg nodejs npm \
+    && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /usr/share/keyrings/adoptium.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb bookworm main" > /etc/apt/sources.list.d/adoptium.list \
+    && apt update && apt -qq install -y temurin-21-jdk \
     && ARCH=$(dpkg --print-architecture) \
-    && update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/java 1 \
-    && update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/javac 1 \
-    && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/java \
-    && update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-${ARCH}/bin/javac \
-    && ln -sf /usr/lib/jvm/java-8-openjdk-${ARCH} /usr/lib/jvm/java-8-openjdk
+    && update-alternatives --install /usr/bin/java java /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/java 1 \
+    && update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/javac 1 \
+    && update-alternatives --set java /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/java \
+    && update-alternatives --set javac /usr/lib/jvm/temurin-21-jdk-${ARCH}/bin/javac \
+    && ln -sf /usr/lib/jvm/temurin-21-jdk-${ARCH} /usr/lib/jvm/temurin-21-jdk
 
-ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk
-ENV PATH="$JAVA_HOME/bin:$PATH"
+ENV JAVA_HOME=/usr/lib/jvm/temurin-21-jdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Install Maven
 RUN apt update && apt -qq install -y maven
@@ -56,8 +59,9 @@ RUN pip3 install gyp-next \
     && npm link
 
 # Install nextflow
-RUN curl -L  "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
-    && mv nextflow /usr/local/bin/
+RUN curl -fsSL "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow" -o /usr/local/bin/nextflow \
+    && chmod +x /usr/local/bin/nextflow \
+    && nextflow -version
 
 
 # Install eva-sub-cli
