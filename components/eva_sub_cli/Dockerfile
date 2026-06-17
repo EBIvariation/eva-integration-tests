@@ -5,14 +5,21 @@ ARG SOURCE_GITHUB_REF
 ARG SOURCE_GITHUB_SHA
 
 ENV vcf_validator_version=0.10.0
-ENV NXF_VER=23.10.0
+ENV NXF_VER=25.10.4
 ENV DOCKER_VER=27.5.1
 
 
 WORKDIR /opt
 
-# Install JAVA and Node
-RUN apt update && apt install -y default-jdk nodejs npm git curl
+# Install JAVA 21 and Node
+RUN apt update && apt -qq install -y wget apt-transport-https gnupg nodejs npm git curl \
+    && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /usr/share/keyrings/adoptium.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb bookworm main" > /etc/apt/sources.list.d/adoptium.list \
+    && apt update && apt -qq install -y temurin-21-jdk \
+    && java -version
+
+ENV JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Install VCF validator
 RUN curl -LJo /usr/local/bin/vcf_validator  https://github.com/EBIvariation/vcf-validator/releases/download/v${vcf_validator_version}/vcf_validator_linux \
@@ -28,8 +35,9 @@ RUN apt update && apt -qq install -y build-essential \
     && npm link
 
 # Install nextflow
-RUN curl -L "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-all" | bash \
-    && mv nextflow /usr/local/bin/
+RUN curl -fsSL "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow" -o /usr/local/bin/nextflow \
+    && chmod +x /usr/local/bin/nextflow \
+    && nextflow -version
 
 # Install Docker CLI (not daemon)
 RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VER}.tgz | tar xzv \

@@ -24,13 +24,9 @@
                 <eva.evapro.password>metadata_db_pass</eva.evapro.password>
                 <eva.evapro.eva-stats.schema>eva_stats</eva.evapro.eva-stats.schema>
 
-                <eva.accession.jdbc.url>jdbc:postgresql://postgres_db:5432/accession_jt</eva.accession.jdbc.url>
-                <eva.accession.user>accession_jt_user</eva.accession.user>
-                <eva.accession.password>accession_jt_pass</eva.accession.password>
-
-                <eva.variant.jdbc.url>jdbc:postgresql://postgres_db:5432/variant_jt</eva.variant.jdbc.url>
-                <eva.variant.user>variant_jt_user</eva.variant.user>
-                <eva.variant.password>variant_jt_pass</eva.variant.password>
+                <eva.accession.jdbc.url>jdbc:postgresql://postgres_db:5432/contiguous_id_blocks_db</eva.accession.jdbc.url>
+                <eva.accession.user>contiguous_id_blocks_user</eva.accession.user>
+                <eva.accession.password>contiguous_id_blocks_pass</eva.accession.password>
 
                 <contig-alias.db-url>jdbc:postgresql://postgres_db:5432/contig_alias</contig-alias.db-url>
                 <contig-alias.db-username>contig_alias_user</contig-alias.db-username>
@@ -90,9 +86,9 @@
                 <eva.evapro.user>metadata_db_user</eva.evapro.user>
                 <eva.evapro.password>metadata_db_pass</eva.evapro.password>
 
-                <eva.accession.jdbc.url>jdbc:postgresql://localhost:5432/accession_jt</eva.accession.jdbc.url>
-                <eva.accession.user>accession_jt_user</eva.accession.user>
-                <eva.accession.password>accession_jt_pass</eva.accession.password>
+                <eva.accession.jdbc.url>jdbc:postgresql://localhost:5432/contiguous_id_blocks_db</eva.accession.jdbc.url>
+                <eva.accession.user>contiguous_id_blocks_user</eva.accession.user>
+                <eva.accession.password>contiguous_id_blocks_pass</eva.accession.password>
                 <eva.accession.mongo.database>eva_accession_sharded</eva.accession.mongo.database>
                 <eva.accession.mongo.human.database>eva_accession_human_sharded</eva.accession.mongo.human.database>
 

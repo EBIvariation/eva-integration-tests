@@ -182,9 +182,9 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         assert config.query('ingestion', 'accession_and_load', 'nextflow_dir', 'variant_load') == '<complete>'
         assert config.query('ingestion', 'project_dir') == '/opt/submissions/ELOAD_1513'
         assert config.query('ingestion', 'database', 'GCA_000002945.2', 'db_name') == 'eva_spombe_asm294v2'
-        assert config.query('ingestion', 'vep', 'GCA_000002945.2', 'cache_version') == 62
+        assert config.query('ingestion', 'vep', 'GCA_000002945.2', 'cache_version') == 63
         assert config.query('ingestion', 'vep', 'GCA_000002945.2', 'species') == 'schizosaccharomyces_pombe'
-        assert config.query('ingestion', 'vep', 'GCA_000002945.2', 'version') == 115
+        assert config.query('ingestion', 'vep', 'GCA_000002945.2', 'version') == 116
 
         compress_vcf_file = f'{self.vcf_file_name}.gz'
         index_vcf_file = f'{compress_vcf_file}.csi'
@@ -376,17 +376,17 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             annotations_coll_total_count = annotations_coll.count_documents({})
             assert annotations_coll_total_count == 4
             annotations_coll_count = annotations_coll.count_documents(
-                {"_id": {"$in": ["CU329671.1_721105_G_T_115_62",
-                                 "X54421.1_3205_A_T_115_62",
-                                 "CU329672.1_721105_T_G_115_62",
-                                 "CU329670.1_721105_G_T_115_62"]}})
+                {"_id": {"$in": ["CU329671.1_721105_G_T_116_63",
+                                 "X54421.1_3205_A_T_116_63",
+                                 "CU329672.1_721105_T_G_116_63",
+                                 "CU329670.1_721105_G_T_116_63"]}})
             assert annotations_coll_count == 4
 
             annotation_metadata_coll = variant_database["annotationMetadata_2_0"]
             annotation_metadata_total_count = annotation_metadata_coll.count_documents({})
             assert annotation_metadata_total_count == 1
             annotation_metadata_count = annotation_metadata_coll.count_documents(
-                {"cachev": "62", "vepv": "115", "is_default": True})
+                {"cachev": "63", "vepv": "116", "is_default": True})
             assert annotation_metadata_count == 1
 
             accession_database = mongo_conn["eva_accession_sharded"]
