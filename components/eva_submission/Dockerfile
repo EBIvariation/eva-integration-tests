@@ -95,7 +95,8 @@ RUN cp eva-accession/eva-remapping-ingest/target/eva-remapping-ingest-*-exec.jar
 RUN cp eva-accession/eva-accession-deprecate/target/eva-accession-deprecate-*-exec.jar /usr/local/software/eva-accession-deprecate.jar
 
 # setup eva-pipeline
-RUN git clone --single-branch https://github.com/EBIvariation/eva-pipeline.git
+#RUN git clone --single-branch https://github.com/EBIvariation/eva-pipeline.git
+RUN git clone --single-branch -b FixJobParameterConverter https://github.com/tcezard/eva-pipeline.git
 RUN mvn package -s /root/maven-settings.xml -f eva-pipeline/pom.xml -DskipTests -P docker
 RUN cp eva-pipeline/target/eva-pipeline-*-exec.jar /usr/local/software/eva-pipeline.jar
 
