@@ -3,7 +3,7 @@ CONNECT sys/oracle_pass@//localhost:1521/FREEPDB1 as sysdba
 INSERT INTO era.PROJECT (PROJECT_ID, CENTER_NAME, PROJECT_ALIAS, FIRST_CREATED, PROJECT_TITLE, TAX_ID, SCIENTIFIC_NAME,
                          COMMON_NAME, PROJECT_XML)
 VALUES ('PRJEB105137', 'King Abdullah University of Science and Technology',
-        'ELOAD_1513', TIMESTAMP '2025-12-09 21:50:31', 'Natural variants for the 20K Rice Genome Project',
+        'ELOAD_1513', TIMESTAMP '2025-12-09 21:50:31', 'Natural variants for the 20K Rice Genome Project, and it contains a comma and (parentheses)',
         4530, 'Oryza sativa', NULL,
         '<?xml version="1.0" encoding="UTF-8"?>
     <PROJECT_SET>
