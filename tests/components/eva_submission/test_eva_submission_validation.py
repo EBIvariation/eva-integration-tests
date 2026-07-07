@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
@@ -140,19 +141,22 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
             f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
             f"--validation_tasks metadata_check structural_variant_check'"
         )
-        run_quiet_command("run eva_submission validate_submission script", validation_cmd)
-
-        # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
-        # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
-        config = Configuration(eload_config_file)
-        submission_id = config.query('submission', 'submission_id')
-        assert submission_id is not None
-        self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'FAILURE')
+        try:
+            run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+            # command should crash so we don't get here
+            assert False
+        except subprocess.CalledProcessError:
+            # copy validation output from docker
+            copy_files_from_container(self.container_name,
+                                      os.path.join(self.container_eload_dir),
+                                      self.test_run_dir)
+            # assert results
+            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                             f'.ELOAD_{self.eload_number}_config.yml')
+            config = Configuration(eload_config_file)
+            submission_id = config.query('submission', 'submission_id')
+            assert submission_id is not None
+            self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')

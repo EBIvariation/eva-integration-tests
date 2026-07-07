@@ -1,6 +1,7 @@
 import os
 import random
 import shutil
+import subprocess
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
@@ -190,16 +191,20 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         brokering_cmd = (
             f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number5} --output_format xml > {log_file} 2>&1'"
         )
-        run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number5}',
-                                         f'.ELOAD_{self.eload_number5}_config.yml')
-        config = Configuration(eload_config_file)
-        submission_id = config.query('submission', 'submission_id')
-        assert submission_id is not None
-        self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'FAILURE')
+        try:
+            run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
+            # command should crash so we don't get here
+            assert False
+        except subprocess.CalledProcessError:
+            copy_files_from_container(self.container_name,
+                                      os.path.join(self.container_eload_dir),
+                                      self.test_run_dir)
+            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number5}',
+                                             f'.ELOAD_{self.eload_number5}_config.yml')
+            config = Configuration(eload_config_file)
+            submission_id = config.query('submission', 'submission_id')
+            assert submission_id is not None
+            self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Get the config file from the container and update the username and password for Webin
