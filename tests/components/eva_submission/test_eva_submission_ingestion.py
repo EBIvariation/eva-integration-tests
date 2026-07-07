@@ -96,6 +96,11 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
+    @log_on_failure
+    def test_ingestion_crash_records_status(self):
+        # TODO
+        ...
+
     def create_submission_dir_and_copy_files_to_container(self):
         # Prepare reference genome
         copy_files_to_container(self.container_name, self.container_reference_genome_dir,
