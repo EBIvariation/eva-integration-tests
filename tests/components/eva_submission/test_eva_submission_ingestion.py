@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
@@ -53,7 +54,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         run_quiet_command("run eva_submission ingest_submission script for archive_only", ingestion_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
 
         # assert results
         eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
@@ -84,7 +85,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         run_quiet_command("run eva_submission ingest_submission script for variant_load and accession", ingestion_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
 
         # assert results
         eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
@@ -98,8 +99,38 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
 
     @log_on_failure
     def test_ingestion_crash_records_status(self):
-        # TODO
-        ...
+        # Trigger a crash by using a nonexistent assembly accession
+        eload_config_in_container = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}',
+                                                 f'.ELOAD_{self.eload_number}_config.yml')
+        yaml_content = read_file_from_container(self.container_name, eload_config_in_container)
+        eload_config = yaml.safe_load(yaml_content)
+        eload_config['submission']['analyses'][f'ELOAD_{self.eload_number}_AA']['assembly_accession'] = 'GCA_fake'
+
+        tmp_yml = os.path.join(self.test_run_dir, '.eload_config.yml')
+        with open(tmp_yml, 'w') as open_file:
+            yaml.safe_dump(eload_config, open_file)
+        copy_files_to_container(self.container_name,
+                                os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}'),
+                                tmp_yml)
+        os.remove(tmp_yml)
+
+        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
+        self.container_log_files.append((self.container_name, log_file))
+        ingestion_cmd = (
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks archive_only > {log_file} 2>&1'"
+        )
+        try:
+            run_quiet_command("run eva_submission ingest_submission script for archive_only", ingestion_cmd)
+            # command should crash so we don't get here
+            assert False
+        except subprocess.CalledProcessError:
+            copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+            # assert results
+            eload_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number}_config.yml')
+            config = Configuration(eload_config_file)
+            submission_id = config.query('submission', 'submission_id')
+            assert submission_id is not None
+            self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Prepare reference genome

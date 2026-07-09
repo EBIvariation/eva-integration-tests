@@ -6,7 +6,7 @@ import yaml
 from ebi_eva_common_pyutils.config import Configuration
 
 from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
-from utils.docker_utils import copy_files_to_container, copy_files_from_container
+from utils.docker_utils import copy_files_to_container, copy_files_from_container, run_command_in_container
 from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import log_on_failure
 
@@ -44,9 +44,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
         # assert results
         eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
                                          f'.ELOAD_{self.eload_number}_config.yml')
@@ -78,9 +76,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
         # assert results
         eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
                                          f'.ELOAD_{self.eload_number}_config.yml')
@@ -119,9 +115,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
         # assert results
         eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
                                          f'.ELOAD_{self.eload_number}_config.yml')
@@ -136,10 +130,21 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
 
     @log_on_failure
     def test_validation_crash_records_status(self):
-        # Run validation without running prepare first
+        # Run preparation from command line
+        prepare_cmd = (f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 "
+                       f"--eload {self.eload_number}")
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+
+        # Delete the metadata json so it can't be found
+        metadata_filepath = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}',
+                                         '10_submitted/metadata_file/eva_sub_cli_metadata.json')
+        run_command_in_container(self.container_name, f'rm {metadata_filepath}')
+
+        # Run validation
         validation_cmd = (
             f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
-            f"--validation_tasks metadata_check structural_variant_check'"
+            f"--validation_tasks metadata_check structural_variant_check"
+            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
         )
         try:
             run_quiet_command("run eva_submission validate_submission script", validation_cmd)
@@ -147,9 +152,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
             assert False
         except subprocess.CalledProcessError:
             # copy validation output from docker
-            copy_files_from_container(self.container_name,
-                                      os.path.join(self.container_eload_dir),
-                                      self.test_run_dir)
+            copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
             # assert results
             eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
                                              f'.ELOAD_{self.eload_number}_config.yml')
