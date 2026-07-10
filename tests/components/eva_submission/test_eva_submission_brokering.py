@@ -1,6 +1,7 @@
 import os
 import random
 import shutil
+import subprocess
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
@@ -41,6 +42,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         self.eload_number2 = random.randint(1, 1000000)
         self.eload_number3 = random.randint(1, 1000000)
         self.eload_number4 = random.randint(1, 1000000)
+        self.eload_number5 = random.randint(1, 1000000)
 
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
@@ -158,6 +160,51 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
+
+    @log_on_failure
+    def test_brokering_crash_records_status(self):
+        # Run prepare and validate
+        prepare_cmd = (
+            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number5}"
+        )
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+        validation_cmd = (
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number5} > {self.container_eload_dir}/ELOAD_{self.eload_number5}/validation.out 2>&1'"
+        )
+        run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+
+        # Overwrite Webin credentials with incorrect ones
+        yaml_content = read_file_from_container(self.container_name,
+                                                os.path.join('/root', '.submission_config.yml'))
+        submission_config = yaml.safe_load(yaml_content)
+        submission_config['ena'].update({'username': 'wrong_user', 'password': 'wrong_password'})
+
+        tmp_yml = os.path.join(self.test_run_dir, '.submission_config.yml')
+        with open(tmp_yml, 'w') as open_file:
+            yaml.safe_dump(submission_config, open_file)
+        copy_files_to_container(self.container_name, '/root', tmp_yml)
+        os.remove(tmp_yml)
+
+        # Run brokering, should fail but still update the status
+        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number5}/broker.out'
+        self.container_log_files.append((self.container_name, log_file))
+        brokering_cmd = (
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number5} --output_format xml > {log_file} 2>&1'"
+        )
+        try:
+            run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
+            # command should crash so we don't get here
+            assert False
+        except subprocess.CalledProcessError:
+            copy_files_from_container(self.container_name,
+                                      os.path.join(self.container_eload_dir),
+                                      self.test_run_dir)
+            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number5}',
+                                             f'.ELOAD_{self.eload_number5}_config.yml')
+            config = Configuration(eload_config_file)
+            submission_id = config.query('submission', 'submission_id')
+            assert submission_id is not None
+            self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'FAILURE')
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Get the config file from the container and update the username and password for Webin
