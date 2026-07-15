@@ -101,6 +101,14 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
+        # Check that nextflow wrote to nobackup output
+        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', os.path.basename(log_file1))
+        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+                   for d in extract_nextflow_work_dirs_from_log(local_log_file))
+        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', os.path.basename(log_file2))
+        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+                   for d in extract_nextflow_work_dirs_from_log(local_log_file))
+
     @log_on_failure
     def test_ingestion_crash_records_status(self):
         # Trigger a crash by using a nonexistent assembly accession

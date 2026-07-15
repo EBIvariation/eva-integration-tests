@@ -15,7 +15,7 @@ def extract_nextflow_work_dirs_from_log(input_file):
     """
     Extract the value following 'work-dir' from a log line containing the nextflow command.
     """
-    pattern = re.compile(r"work-dir\s+\S+")
+    pattern = re.compile(r"work-dir\s+(\S+)")
 
     with open(input_file, "r") as f:
         for line in f:
