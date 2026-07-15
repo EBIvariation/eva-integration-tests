@@ -280,13 +280,19 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
     def assert_submission_details_updated(self, submission_id):
         metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
         with metadata_connection_handle:
-            submission_details_query = (f"SELECT release_date, project_accession, analysis_accessions "
+            submission_details_query = (f"SELECT release_date, project_accession "
                                         f"FROM eva_submissions.submission_details "
                                         f"where submission_id = '{submission_id}'")
             results = get_all_results_for_query(metadata_connection_handle, submission_details_query)
             assert len(results) == 1
-            release_date, project_accession, analysis_accessions = results[0]
+            release_date, project_accession = results[0]
             assert release_date is not None
             assert project_accession is not None and project_accession.startswith('PRJE')
-            assert analysis_accessions is not None and len(analysis_accessions) > 0
+
+            analysis_accessions_query = (f"SELECT analysis_accessions "
+                                        f"FROM eva_submissions.submission_details_analysis_accessions "
+                                        f"where submission_id = '{submission_id}'")
+            results = get_all_results_for_query(metadata_connection_handle, analysis_accessions_query)
+            assert len(results) > 0
+            analysis_accessions = [r[0] for r in results]
             assert analysis_accessions[0].startswith('ERZ')
