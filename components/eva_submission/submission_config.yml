@@ -2,6 +2,7 @@ ftp_dir: /opt/ftp/private/
 public_ftp_dir: /opt/ftp/public/
 
 eloads_dir: /opt/submissions/
+nobackup_eloads_dir: /opt/no_backup/submissions/
 
 eloads_lts_dir: ''
 
