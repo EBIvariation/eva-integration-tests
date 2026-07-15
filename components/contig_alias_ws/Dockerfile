@@ -1,19 +1,14 @@
-FROM eclipse-temurin:11-jdk
+FROM tomcat:9.0-jdk11
 
-ARG TOMCAT_VERSION=9.0.120
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git maven curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN curl -fsSL "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" -o /tmp/tomcat.tar.gz \
-    && mkdir -p /usr/local/tomcat \
-    && tar xzf /tmp/tomcat.tar.gz -C /usr/local/tomcat --strip-components=1 \
-    && rm /tmp/tomcat.tar.gz
+RUN apt update  \
+    && apt install -y git maven
 
 COPY maven-settings.xml /root
 
 WORKDIR /usr/local/software
+
+# make manager app available
+RUN cp -avT /usr/local/tomcat/webapps.dist/manager /usr/local/tomcat/webapps/manager
 
 # deploy contig alias
 RUN git clone https://github.com/EBIvariation/contig-alias.git
@@ -22,4 +17,4 @@ RUN cp contig-alias/target/contig-alias-*.war.original /usr/local/tomcat/webapps
 
 EXPOSE 8080
 
-CMD ["/usr/local/tomcat/bin/catalina.sh", "run"]
+CMD ["catalina.sh", "run"]
