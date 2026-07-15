@@ -60,11 +60,24 @@ CREATE TABLE eva_submissions.submission_details (
 	metadata_json jsonb NOT NULL,
 	project_description varchar(5000) NOT NULL,
 	project_title varchar(500) NOT NULL,
+	project_accession varchar(255) NULL,
 	CONSTRAINT submission_details_pkey PRIMARY KEY (submission_id)
 );
 
 ALTER TABLE eva_submissions.submission_details OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.submission_details to metadata_db_user;
+
+
+--- table (submission_details_analysis_accessions)
+CREATE TABLE eva_submissions.submission_details_analysis_accessions (
+	submission_id varchar(255) NOT NULL,
+	analysis_accessions varchar(255) NULL
+);
+
+ALTER TABLE eva_submissions.submission_details_analysis_accessions OWNER to metadata_db_user;
+GRANT ALL ON TABLE eva_submissions.submission_details_analysis_accessions to metadata_db_user;
+
+ALTER TABLE eva_submissions.submission_details_analysis_accessions ADD CONSTRAINT fk_submission_details_analysis_accessions_submission_id FOREIGN KEY (submission_id) REFERENCES eva_submissions.submission_details(id);
 
 
 --- table (submission_processing_status)
