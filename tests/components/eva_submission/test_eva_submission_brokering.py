@@ -281,7 +281,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
         with metadata_connection_handle:
             submission_details_query = (f"SELECT release_date, project_accession "
-                                        f"FROM eva_submissions.submission_details "
+                                        f"FROM eva_submissions.submission_tracking_details "
                                         f"where submission_id = '{submission_id}'")
             results = get_all_results_for_query(metadata_connection_handle, submission_details_query)
             assert len(results) == 1
@@ -290,7 +290,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
             assert project_accession is not None and project_accession.startswith('PRJE')
 
             analysis_accessions_query = (f"SELECT analysis_accessions "
-                                        f"FROM eva_submissions.submission_details_analysis_accessions "
+                                        f"FROM eva_submissions.submission_tracking_details_analysis_accessions "
                                         f"where submission_id = '{submission_id}'")
             results = get_all_results_for_query(metadata_connection_handle, analysis_accessions_query)
             assert len(results) > 0
