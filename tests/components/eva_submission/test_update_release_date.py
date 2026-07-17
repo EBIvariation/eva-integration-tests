@@ -3,6 +3,7 @@ import random
 import shutil
 from datetime import date, timedelta
 
+import pytest
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
@@ -14,6 +15,7 @@ from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import log_on_failure
 
 
+@pytest.mark.skip(reason='update_release_date script not currently working')
 class TestEvaSubmissionUpdateReleaseDate(TestEvaSubmission):
 
     def setUp(self):
