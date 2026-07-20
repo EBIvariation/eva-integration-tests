@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 
 from ebi_eva_common_pyutils.logger import logging_config as log_cfg
@@ -9,6 +10,19 @@ from utils.test_with_docker_compose import TestWithDockerCompose
 
 logger = log_cfg.get_logger(__name__)
 
+
+def extract_nextflow_work_dirs_from_log(input_file):
+    """
+    Extract the value following 'work-dir' from a log line containing the nextflow command.
+    """
+    pattern = re.compile(r"work-dir\s+(\S+)")
+
+    with open(input_file, "r") as f:
+        for line in f:
+            if "Running command:" in line and "nextflow" in line:
+                match = pattern.search(line)
+                if match:
+                    yield match.group(1)
 
 class TestEvaSubmission(TestWithDockerCompose):
     vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')

@@ -8,7 +8,7 @@ from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_hand
 from ebi_eva_internal_pyutils.mongo_utils import get_mongo_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 
-from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
+from tests.components.eva_submission.test_eva_submission import TestEvaSubmission, extract_nextflow_work_dirs_from_log
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container, \
     run_command_in_container
 from utils.test_utils import run_quiet_command
@@ -64,6 +64,10 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
+        # Check that nextflow wrote to nobackup output
+        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'ingestion.out')
+        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+                   for d in extract_nextflow_work_dirs_from_log(local_log_file))
 
     @log_on_failure
     def test_ingestion_variant_load_idempotent(self):
@@ -97,6 +101,14 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
+        # Check that nextflow wrote to nobackup output
+        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', os.path.basename(log_file1))
+        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+                   for d in extract_nextflow_work_dirs_from_log(local_log_file))
+        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', os.path.basename(log_file2))
+        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+                   for d in extract_nextflow_work_dirs_from_log(local_log_file))
+
     @log_on_failure
     def test_ingestion_crash_records_status(self):
         # Trigger a crash by using a nonexistent assembly accession
@@ -106,7 +118,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         eload_config = yaml.safe_load(yaml_content)
         eload_config['submission']['analyses'][f'ELOAD_{self.eload_number}_AA']['assembly_accession'] = 'GCA_fake'
 
-        tmp_yml = os.path.join(self.test_run_dir, '.eload_config.yml')
+        tmp_yml = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number}_config.yml')
         with open(tmp_yml, 'w') as open_file:
             yaml.safe_dump(eload_config, open_file)
         copy_files_to_container(self.container_name,
@@ -120,13 +132,13 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} > {log_file} 2>&1'"
         )
         try:
-            run_quiet_command("run eva_submission ingest_submission script for archive_only", ingestion_cmd)
+            run_quiet_command("run eva_submission ingest_submission script that is meant to fail", ingestion_cmd)
             # command should crash so we don't get here
             assert False
         except subprocess.CalledProcessError:
             copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
             # assert results
-            eload_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number}_config.yml')
+            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
             config = Configuration(eload_config_file)
             submission_id = config.query('submission', 'submission_id')
             assert submission_id is not None
