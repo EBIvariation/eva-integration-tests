@@ -6,9 +6,6 @@ set -e
 if [[ -z "$SOURCE_GITHUB_REPOSITORY" ]] ; then SOURCE_GITHUB_REPOSITORY=EBIvariation/eva-submission ; fi
 if [[ -z "$SOURCE_GITHUB_REF" ]] ; then SOURCE_GITHUB_REF=master ; fi
 if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; fi
-# TODO: Change back before merging
-SOURCE_GITHUB_REPOSITORY=tcezard/eva-submission
-SOURCE_GITHUB_REF=nextflow_on_no_backup
 
 echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
