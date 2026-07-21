@@ -3,7 +3,6 @@ import random
 import shutil
 from datetime import date, timedelta
 
-import pytest
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
@@ -15,8 +14,7 @@ from utils.test_utils import run_quiet_command
 from utils.test_with_docker_compose import log_on_failure
 
 
-@pytest.mark.skip(reason='update_release_date script not currently working')
-class TestEvaSubmissionUpdateReleaseDate(TestEvaSubmission):
+class TestEvaSubmissionUpdateSubmissionTracking(TestEvaSubmission):
 
     def setUp(self):
         self.webin_username = os.environ.get('EVA_SUBMISSION_WEBIN_USERNAME')
@@ -61,9 +59,9 @@ class TestEvaSubmissionUpdateReleaseDate(TestEvaSubmission):
         self.container_log_files.append((self.container_name, log_file))
         new_release_date = (date.today() + timedelta(weeks=48)).strftime('%Y-%m-%d')
         update_release_date_cmd = (
-            f"docker exec {self.container_name} sh -c 'update_release_date.py --eload_id {self.eload_number} --release_date {new_release_date} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'update_submission_tracking.py --eload_id {self.eload_number} --release_date {new_release_date} > {log_file} 2>&1'"
         )
-        run_quiet_command("run eva_submission update_release_date script", update_release_date_cmd)
+        run_quiet_command("run eva_submission update_submission_tracking script", update_release_date_cmd)
 
         # Assert results
         copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
