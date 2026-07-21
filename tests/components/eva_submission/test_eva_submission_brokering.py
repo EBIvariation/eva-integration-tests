@@ -5,6 +5,8 @@ import subprocess
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 
 from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, read_file_from_container
@@ -84,6 +86,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
+        self.assert_submission_details_updated(submission_id)
 
     @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
@@ -160,6 +163,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
+        self.assert_submission_details_updated(submission_id)
 
     @log_on_failure
     def test_brokering_crash_records_status(self):
@@ -272,3 +276,23 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         # ENA brokering passes
         assert config.query('brokering', 'ena', 'pass') is True
         assert config.query('brokering', 'ena', 'PROJECT', ret_default='').startswith('PRJE')
+
+    def assert_submission_details_updated(self, submission_id):
+        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
+        with metadata_connection_handle:
+            submission_details_query = (f"SELECT release_date, project_accession "
+                                        f"FROM eva_submissions.submission_tracking_details "
+                                        f"where submission_id = '{submission_id}'")
+            results = get_all_results_for_query(metadata_connection_handle, submission_details_query)
+            assert len(results) == 1
+            release_date, project_accession = results[0]
+            assert release_date is not None
+            assert project_accession is not None and project_accession.startswith('PRJE')
+
+            analysis_accessions_query = (f"SELECT analysis_accessions "
+                                        f"FROM eva_submissions.submission_tracking_details_analysis_accessions "
+                                        f"where submission_id = '{submission_id}'")
+            results = get_all_results_for_query(metadata_connection_handle, analysis_accessions_query)
+            assert len(results) > 0
+            analysis_accessions = [r[0] for r in results]
+            assert analysis_accessions[0].startswith('ERZ')

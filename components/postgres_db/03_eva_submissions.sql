@@ -67,6 +67,30 @@ ALTER TABLE eva_submissions.submission_details OWNER to metadata_db_user;
 GRANT ALL ON TABLE eva_submissions.submission_details to metadata_db_user;
 
 
+--- table (submission_tracking_details)
+CREATE TABLE eva_submissions.submission_tracking_details (
+	submission_id varchar(255) NOT NULL,
+	project_accession varchar(255) NULL,
+	release_date timestamp NULL,
+	CONSTRAINT submission_tracking_details_pkey PRIMARY KEY (submission_id)
+);
+
+ALTER TABLE eva_submissions.submission_tracking_details OWNER to metadata_db_user;
+GRANT ALL ON TABLE eva_submissions.submission_tracking_details to metadata_db_user;
+
+
+--- table (submission_tracking_details_analysis_accessions)
+CREATE TABLE eva_submissions.submission_tracking_details_analysis_accessions (
+	submission_id varchar(255) NOT NULL,
+	analysis_accessions varchar(255) NULL
+);
+
+ALTER TABLE eva_submissions.submission_tracking_details_analysis_accessions OWNER to metadata_db_user;
+GRANT ALL ON TABLE eva_submissions.submission_tracking_details_analysis_accessions to metadata_db_user;
+
+ALTER TABLE eva_submissions.submission_tracking_details_analysis_accessions ADD CONSTRAINT fk_submission_tracking_details_analysis_accessions_submission_id FOREIGN KEY (submission_id) REFERENCES eva_submissions.submission_tracking_details(submission_id);
+
+
 --- table (submission_processing_status)
 CREATE TABLE eva_submissions.submission_processing_status (
 	submission_id varchar(255) NOT NULL,
