@@ -54,12 +54,13 @@ class TestEvaSubmissionUpdateSubmissionTracking(TestEvaSubmission):
         )
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
-        # Run update release date from command line
+        # Run update submission tracking from command line
         log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/update_release_date.out'
         self.container_log_files.append((self.container_name, log_file))
-        new_release_date = (date.today() + timedelta(weeks=48)).strftime('%Y-%m-%d')
+        new_release_date = date.today() + timedelta(weeks=48)
+        new_release_date_str = new_release_date.strftime('%Y-%m-%d')
         update_release_date_cmd = (
-            f"docker exec {self.container_name} sh -c 'update_submission_tracking.py --eload_id {self.eload_number} --release_date {new_release_date} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'update_submission_tracking.py --eload_id {self.eload_number} --release_date {new_release_date_str} > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission update_submission_tracking script", update_release_date_cmd)
 
@@ -78,7 +79,6 @@ class TestEvaSubmissionUpdateSubmissionTracking(TestEvaSubmission):
             results = get_all_results_for_query(metadata_connection_handle, submission_details_query)
             assert len(results) == 1
             current_release_date = results[0][0]
-            print(current_release_date)
             assert current_release_date is not None
             assert current_release_date == new_release_date
 
