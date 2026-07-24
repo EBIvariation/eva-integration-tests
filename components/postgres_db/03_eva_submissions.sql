@@ -71,7 +71,8 @@ GRANT ALL ON TABLE eva_submissions.submission_details to metadata_db_user;
 CREATE TABLE eva_submissions.submission_tracking_details (
 	submission_id varchar(255) NOT NULL,
 	project_accession varchar(255) NULL,
-	release_date timestamp NULL,
+	release_date date NULL,
+	rt_link varchar(255) NULL,
 	CONSTRAINT submission_tracking_details_pkey PRIMARY KEY (submission_id)
 );
 
