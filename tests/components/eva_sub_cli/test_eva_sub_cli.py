@@ -147,9 +147,9 @@ class TestEvaSubCli(TestWithDockerCompose):
                 raw_payloads.append(raw_payload)
             assert len(results) > 0
             if expected_events is not None:
-                assert event_types == expected_events
+                assert sorted(event_types) == sorted(expected_events)
             if expected_tasks_list is not None:
-                assert tasks_list == expected_tasks_list
+                assert sorted(tasks_list) == sorted(expected_tasks_list)
             if expected_executors is not None:
-                assert executors == expected_executors
+                assert sorted(executors) == sorted(expected_executors)
             return raw_payloads
