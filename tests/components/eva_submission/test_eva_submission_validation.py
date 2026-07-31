@@ -4,6 +4,8 @@ import subprocess
 
 import yaml
 from ebi_eva_common_pyutils.config import Configuration
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 
 from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
 from utils.docker_utils import copy_files_to_container, copy_files_from_container, run_command_in_container
@@ -160,6 +162,38 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
             submission_id = config.query('submission', 'submission_id')
             assert submission_id is not None
             self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'FAILURE')
+
+    @log_on_failure
+    def test_validation_with_submission_id(self):
+        prepare_cmd = (
+            f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number}"
+        )
+        # Run preparation from command line
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+
+        # Get submission ID from DB
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
+            submission_id_query = (f"SELECT submission_id FROM eva_submissions.submission_eload "
+                                   f"where eload = {self.eload_number}")
+            results = get_all_results_for_query(metadata_connection_handle, submission_id_query)
+            submission_id = results[0][0]
+
+        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
+        self.container_log_files.append((self.container_name, log_file))
+        validation_cmd = (
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {log_file} 2>&1'"
+        )
+        # Run validation from command line
+        run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        # assert results
+        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
+                                         f'.ELOAD_{self.eload_number}_config.yml')
+        self.assert_validation_pass_in_config(eload_config_file)
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
+        self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'SUCCESS')
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
