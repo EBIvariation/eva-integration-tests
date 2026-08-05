@@ -98,7 +98,7 @@ class TestEvaSubCli(TestWithDockerCompose):
                 }
             ],
             "project": {
-                "title": "test_project_title",
+                "title": "test_project_title_long",
                 "description": "test_project_description",
                 "taxId": 1234,
                 "centre": "test_project_centre"
