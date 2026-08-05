@@ -190,12 +190,12 @@ class TestEvaSubCliSubmission(TestEvaSubCli):
                                                                             'lastName': 'test_user_last_name'}
         else:
             assert response_data['submissionId'] == submission_id
-            assert response_data['projectTitle'] == 'test_project_title'
+            assert response_data['projectTitle'] == 'test_project_title_long'
             assert response_data['projectDescription'] == 'test_project_description'
             assert response_data['metadataJson']['project'] == {'centre': 'test_project_centre',
                                                                 'description': 'test_project_description',
                                                                 'taxId': 1234,
-                                                                'title': 'test_project_title'}
+                                                                'title': 'test_project_title_long'}
             assert response_data['metadataJson']['files'][0] == {'analysisAlias': 'AA', 'fileName': 'input_passed.vcf',
                                                                  'fileSize': 45050}
             assert response_data['metadataJson']['submitterDetails'][0] == {'centre': 'test_user_centre',
