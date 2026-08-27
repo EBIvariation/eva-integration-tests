@@ -65,7 +65,8 @@ RUN curl -fsSL "https://github.com/nextflow-io/nextflow/releases/download/v${NXF
 
 
 # Install eva-sub-cli
-RUN git clone https://github.com/EBIvariation/eva-sub-cli.git eva-sub-cli \
+# TODO revert before merge
+RUN git clone -b EVA-4247 https://github.com/apriltuesday/eva-sub-cli.git eva-sub-cli \
     && cd eva-sub-cli \
     && python -m venv python \
     && python/bin/pip install -U pip \

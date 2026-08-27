@@ -7,6 +7,10 @@ if [[ -z "$SOURCE_GITHUB_REPOSITORY" ]] ; then SOURCE_GITHUB_REPOSITORY=EBIvaria
 if [[ -z "$SOURCE_GITHUB_REF" ]] ; then SOURCE_GITHUB_REF=main ; fi
 if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; fi
 
+# TODO revert before merge
+SOURCE_GITHUB_REPOSITORY=apriltuesday/eva-sub-cli
+SOURCE_GITHUB_REF=EVA-4247
+
 echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
 git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-sub-cli
