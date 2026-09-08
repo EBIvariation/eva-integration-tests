@@ -39,6 +39,44 @@ class TestEvaSubCliValidation(TestEvaSubCli):
                                        self.metadata_json, executor='native')
 
     @log_on_failure
+    def test_native_validator_with_json_relative_file_path(self):
+        # copy the VCF file into a sub-directory of the submission dir so that it can be referenced with a
+        # relative file path (i.e. not just a bare file name) in the metadata json
+        relative_vcf_dir = 'vcf_files'
+        copy_files_to_container(
+            self.container_name,
+            os.path.join(self.container_submission_dir, relative_vcf_dir),
+            os.path.join(self.vcf_files_dir, 'input_passed.vcf')
+        )
+
+        # create metadata json file referencing the VCF file using a relative path and copy to container
+        sub_metadata = self.get_validation_json_metadata()
+        sub_metadata['files'][0]['fileName'] = os.path.join(relative_vcf_dir, 'input_passed.vcf')
+        with open(self.metadata_json, 'w') as open_metadata:
+            json.dump(sub_metadata, open_metadata)
+        copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_json)
+
+        validation_cmd = (
+            f"docker exec {self.container_name} eva-sub-cli.py --executor=NATIVE --tasks=VALIDATE "
+            f"--submission_dir {self.container_submission_dir} "
+            f"--metadata_json {os.path.join(self.container_submission_dir, os.path.basename(self.metadata_json))} "
+        )
+
+        # Run validation from command line
+        run_quiet_command("run eva_sub_cli native validator with relative file path json metadata using command "
+                          "line", validation_cmd)
+
+        # copy validation output from docker
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_submission_dir, 'validation_output'),
+                                  self.test_run_dir)
+        # assert results
+        self.assert_validation_results(self.get_expected_sample(),
+                                       self.get_expected_metadata_files_json_relative_path(relative_vcf_dir),
+                                       'Validation passed successfully.', self.get_expected_semantic_val(),
+                                       self.metadata_json, executor='native')
+
+    @log_on_failure
     def test_native_validator_with_xlsx(self):
         # create metadata xlsx file and copy to container
         shutil.copyfile(
@@ -263,6 +301,12 @@ class TestEvaSubCliValidation(TestEvaSubCli):
     def get_expected_metadata_files_json_docker(self):
         return [
             '96a80c9368cc3c37095c86fbe6044fb2 45050 /opt/vcf_validation/opt/input_passed.vcf'
+        ]
+
+    def get_expected_metadata_files_json_relative_path(self, relative_vcf_dir):
+        return [
+            f'96a80c9368cc3c37095c86fbe6044fb2 45050 '
+            f'{os.path.join(self.container_submission_dir, relative_vcf_dir, "input_passed.vcf")}'
         ]
 
     def get_expected_semantic_val(self):
