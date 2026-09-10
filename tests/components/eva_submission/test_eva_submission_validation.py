@@ -37,24 +37,28 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number)
+
+        log_file = f'{self.container_submission_dir}/{submission_id}/validation.out'
         self.container_log_files.append((self.container_name, log_file))
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {log_file} 2>&1'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
-        self.assert_validation_pass_in_config(eload_config_file)
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                              f'.{submission_id}_config.yml')
+        self.assert_validation_pass_in_config(submission_config_file)
 
-        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'{submission_id}'))
 
-        config = Configuration(eload_config_file)
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'SUCCESS')
@@ -69,25 +73,29 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number)
+
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} "
             f"--validation_tasks metadata_check structural_variant_check "
-            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+            f"> {self.container_submission_dir}/{submission_id}/validation.out'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
+        eload_submission_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
 
         tasks = ['metadata_check', 'structural_variant_check']
-        self.assert_validation_pass_in_config(eload_config_file, tasks=tasks)
-        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
+        self.assert_validation_pass_in_config(eload_submission_file, tasks=tasks)
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'{submission_id}'), tasks=tasks)
 
-        config = Configuration(eload_config_file)
+        config = Configuration(eload_submission_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'FAILURE')
@@ -100,32 +108,37 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number)
+
         # Run first set of tasks
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} "
             f"--validation_tasks metadata_check structural_variant_check "
-            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+            f"> {self.container_submission_dir}/{submission_id}/validation.out'"
         )
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # Run the next set of tasks
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} "
             f"--validation_tasks vcf_check naming_convention_check "
-            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+            f"> {self.container_submission_dir}/{submission_id}/validation.out'"
         )
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        copy_files_from_container(self.container_name,
+                                  os.path.join(self.container_submission_dir),
+                                  self.test_run_dir)
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
         tasks = ['vcf_check', 'metadata_check', 'structural_variant_check', 'naming_convention_check']
-        self.assert_validation_pass_in_config(eload_config_file, tasks=tasks)
-        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'), tasks=tasks)
+        self.assert_validation_pass_in_config(submission_config_file, tasks=tasks)
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'{submission_id}'), tasks=tasks)
 
-        config = Configuration(eload_config_file)
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'FAILURE')
@@ -137,16 +150,20 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
                        f"--eload {self.eload_number}")
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
+
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number)
+
         # Delete the metadata json so it can't be found
-        metadata_filepath = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}',
+        metadata_filepath = os.path.join(self.container_submission_dir, f'{submission_id}',
                                          '10_submitted/metadata_file/eva_sub_cli_metadata.json')
         run_command_in_container(self.container_name, f'rm {metadata_filepath}')
 
         # Run validation
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number} "
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} "
             f"--validation_tasks metadata_check structural_variant_check"
-            f"> {self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'"
+            f"> {self.container_submission_dir}/{submission_id}/validation.out'"
         )
         try:
             run_quiet_command("run eva_submission validate_submission script", validation_cmd)
@@ -154,11 +171,11 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
             assert False
         except subprocess.CalledProcessError:
             # copy validation output from docker
-            copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+            copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
             # assert results
-            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                             f'.ELOAD_{self.eload_number}_config.yml')
-            config = Configuration(eload_config_file)
+            submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                             f'.{submission_id}_config.yml')
+            config = Configuration(submission_config_file)
             submission_id = config.query('submission', 'submission_id')
             assert submission_id is not None
             self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'FAILURE')
@@ -172,13 +189,9 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
         # Get submission ID from DB
-        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
-            submission_id_query = (f"SELECT submission_id FROM eva_submissions.submission_eload "
-                                   f"where eload = {self.eload_number}")
-            results = get_all_results_for_query(metadata_connection_handle, submission_id_query)
-            submission_id = results[0][0]
+        submission_id = self.get_submission_id_from_db(self.eload_number)
 
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/validation.out'
+        log_file = f'{self.container_submission_dir}/{submission_id}/validation.out'
         self.container_log_files.append((self.container_name, log_file))
         validation_cmd = (
             f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {log_file} 2>&1'"
@@ -187,19 +200,19 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
-        self.assert_validation_pass_in_config(eload_config_file)
-        self.assert_directory_structure(os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}'))
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
+        self.assert_validation_pass_in_config(submission_config_file)
+        self.assert_directory_structure(os.path.join(self.test_run_dir, f'{submission_id}'))
         self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'SUCCESS')
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
-        copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
+        copy_files_to_container(self.container_name, self.container_ftp_submission_dir, vcf_file)
         if self.metadata_xlsx:
-            copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
+            copy_files_to_container(self.container_name, self.container_ftp_submission_dir, self.metadata_xlsx)
 
         # Prepare reference genome
         copy_files_to_container(self.container_name, self.container_reference_genome_dir,
@@ -238,9 +251,9 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
             cli_results = yaml.safe_load(open_file)
         if 'assembly_check' in tasks:
             assembly_report_path = cli_results['assembly_check']['vcf_file_ASM294v2.vcf']['report_path'].replace(
-                self.container_eload_dir, self.test_run_dir)
+                self.container_submission_dir, self.test_run_dir)
             assert os.path.isfile(assembly_report_path)
         if 'metadata_check' in tasks:
             metadata_report_path = cli_results['metadata_check']['json_report_path'].replace(
-                self.container_eload_dir, self.test_run_dir)
+                self.container_submission_dir, self.test_run_dir)
             assert os.path.isfile(metadata_report_path)
