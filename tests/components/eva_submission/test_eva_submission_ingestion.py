@@ -45,101 +45,110 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
 
     @log_on_failure
     def test_ingestion_archive_only(self):
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
+        submission_id = f'ELOAD_{self.eload_number}'
+        self.put_submission_in_db(submission_id, self.eload_number)
+
+        log_file = f'{self.container_submission_dir}/{submission_id}/ingestion.out'
         self.container_log_files.append((self.container_name, log_file))
         ingestion_cmd = (
-            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks archive_only > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --submission_id {submission_id} --tasks archive_only > {log_file} 2>&1'"
         )
         # Run ingestion from command line
         run_quiet_command("run eva_submission ingest_submission script for archive_only", ingestion_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
 
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
-        self.assert_ingestion_archive_only(eload_config_file)
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
+        self.assert_ingestion_archive_only(submission_config_file)
 
-        config = Configuration(eload_config_file)
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
         # Check that nextflow wrote to nobackup output
-        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'ingestion.out')
-        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+        local_log_file = os.path.join(self.test_run_dir, f'{submission_id}', f'ingestion.out')
+        assert all(d.startswith(f'/opt/no_backup/submissions/{submission_id}/nextflow_output_')
                    for d in extract_nextflow_work_dirs_from_log(local_log_file))
 
     @log_on_failure
     def test_ingestion_variant_load_idempotent(self):
-        log_file1 = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion_first.out'
+        submission_id = f'ELOAD_{self.eload_number}'
+        self.put_submission_in_db(submission_id, self.eload_number)
+
+        log_file1 = f'{self.container_submission_dir}/{submission_id}/ingestion_first.out'
         self.container_log_files.append((self.container_name, log_file1))
         ingestion_cmd = (
-            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks metadata_load variant_load accession > {log_file1} '"
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --submission_id {submission_id} --tasks metadata_load variant_load accession > {log_file1} '"
         )
         # Run ingestion from command line
         run_quiet_command("run eva_submission ingest_submission script for variant_load and accession", ingestion_cmd)
 
-        log_file2 = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion_second.out'
+        log_file2 = f'{self.container_submission_dir}/{submission_id}/ingestion_second.out'
         self.container_log_files.append((self.container_name, log_file2))
         # Run a second time but only the variant load
         ingestion_cmd = (
-            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} --tasks variant_load > {log_file2} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --submission_id {submission_id} --tasks variant_load > {log_file2} 2>&1'"
         )
         # Run ingestion from command line
         run_quiet_command("run eva_submission ingest_submission script for variant_load and accession", ingestion_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
 
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
-        self.assert_ingestion_variant_load_and_accession(eload_config_file)
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
+        self.assert_ingestion_variant_load_and_accession(submission_config_file)
 
-        config = Configuration(eload_config_file)
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
 
         # Check that nextflow wrote to nobackup output
-        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', os.path.basename(log_file1))
-        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+        local_log_file = os.path.join(self.test_run_dir, f'{submission_id}', os.path.basename(log_file1))
+        assert all(d.startswith(f'/opt/no_backup/submissions/{submission_id}/nextflow_output_')
                    for d in extract_nextflow_work_dirs_from_log(local_log_file))
-        local_log_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', os.path.basename(log_file2))
-        assert all(d.startswith(f'/opt/no_backup/submissions/ELOAD_{self.eload_number}/nextflow_output_')
+        local_log_file = os.path.join(self.test_run_dir, f'{submission_id}', os.path.basename(log_file2))
+        assert all(d.startswith(f'/opt/no_backup/submissions/{submission_id}/nextflow_output_')
                    for d in extract_nextflow_work_dirs_from_log(local_log_file))
 
     @log_on_failure
     def test_ingestion_crash_records_status(self):
-        # Trigger a crash by using a nonexistent assembly accession
-        eload_config_in_container = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}',
-                                                 f'.ELOAD_{self.eload_number}_config.yml')
-        yaml_content = read_file_from_container(self.container_name, eload_config_in_container)
-        eload_config = yaml.safe_load(yaml_content)
-        eload_config['submission']['analyses'][f'ELOAD_{self.eload_number}_AA']['assembly_accession'] = 'GCA_fake'
+        submission_id = f'ELOAD_{self.eload_number}'
+        self.put_submission_in_db(submission_id, self.eload_number)
 
-        tmp_yml = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number}_config.yml')
+        # Trigger a crash by using a nonexistent assembly accession
+        submission_config_in_container = os.path.join(self.container_submission_dir, f'{submission_id}',
+                                                 f'.{submission_id}_config.yml')
+        yaml_content = read_file_from_container(self.container_name, submission_config_in_container)
+        submission_config = yaml.safe_load(yaml_content)
+        submission_config['submission']['analyses'][f'{submission_id}_AA']['assembly_accession'] = 'GCA_fake'
+
+        tmp_yml = os.path.join(self.test_run_dir, f'.{submission_id}_config.yml')
         with open(tmp_yml, 'w') as open_file:
-            yaml.safe_dump(eload_config, open_file)
+            yaml.safe_dump(submission_config, open_file)
         copy_files_to_container(self.container_name,
-                                os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}'),
+                                os.path.join(self.container_submission_dir, f'{submission_id}'),
                                 tmp_yml)
         os.remove(tmp_yml)
 
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/ingestion.out'
+        log_file = f'{self.container_submission_dir}/{submission_id}/ingestion.out'
         self.container_log_files.append((self.container_name, log_file))
         ingestion_cmd = (
-            f"docker exec {self.container_name} sh -c 'ingest_submission.py --eload {self.eload_number} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --submission_id {submission_id} > {log_file} 2>&1'"
         )
         try:
             run_quiet_command("run eva_submission ingest_submission script that is meant to fail", ingestion_cmd)
             # command should crash so we don't get here
             assert False
         except subprocess.CalledProcessError:
-            copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
+            copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
             # assert results
-            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
-            config = Configuration(eload_config_file)
+            submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
+            config = Configuration(submission_config_file)
             submission_id = config.query('submission', 'submission_id')
             assert submission_id is not None
             self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
@@ -159,7 +168,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         eload_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number}_config.yml')
         with open(eload_config_file, 'w') as open_file:
             open_file.write(open_file_content)
-        eload_dir = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}')
+        eload_dir = os.path.join(self.container_submission_dir, f'ELOAD_{self.eload_number}')
         copy_files_to_container(self.container_name, eload_dir, eload_config_file)
 
         # compress and index the vcf file and put in 18_brokering
@@ -285,16 +294,16 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             expected = [('PRJEB105137', 4530)]
             assert set(results) == set(expected)
 
-            query = ("select eva_submission_id, eva_submission_status_id from evapro.eva_submission "
-                     "where eva_submission_id = 1513")
+            query = (f"select eva_submission_id, eva_submission_status_id from evapro.eva_submission "
+                     "where eva_submission_id = 'ELOAD_1513'")
             results = get_all_results_for_query(metadata_connection_handle, query)
-            expected = [(1513, 6)]
+            expected = [('ELOAD_1513', 6)]
             assert set(results) == set(expected)
 
-            query = ("select project_accession, old_ticket_id, eload_id from evapro.project_eva_submission "
+            query = ("select project_accession, old_ticket_id, submission_id from evapro.project_eva_submission "
                      "where project_accession = 'PRJEB105137'")
             results = get_all_results_for_query(metadata_connection_handle, query)
-            expected = [('PRJEB105137', 1513, 1513)]
+            expected = [('PRJEB105137', 'ELOAD_1513', 'ELOAD_1513')]
             assert set(results) == set(expected)
 
             query = "select project_accession, alias from evapro.project where project_accession = 'PRJEB105137'"
