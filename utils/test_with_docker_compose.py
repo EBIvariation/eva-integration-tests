@@ -117,7 +117,7 @@ class TestWithDockerCompose(TestCase):
     test_run_dir = None
     docker_compose_file = None
     container_name = None
-    container_submission_dir = None
+    container_ftp_submission_dir = None
     container_log_files = None
 
     @classmethod
