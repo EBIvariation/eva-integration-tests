@@ -20,7 +20,7 @@ validation:
     analyses:
       ELOAD_{ELOAD_number}_AA: none
 submission:
-  submission_id: 43092992-2a33-4f98-a854-88322558f9c2
+  submission_id: ELOAD_1513
   analyses:
     ELOAD_{ELOAD_number}_AA:
       assembly_accession: GCA_000002945.2
