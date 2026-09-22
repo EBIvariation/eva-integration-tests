@@ -2,9 +2,9 @@ name: Python tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, replace-eload-with-submissionId ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, replace-eload-with-submissionId ]
 
 jobs:
   lint:
