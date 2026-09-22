@@ -76,7 +76,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
@@ -103,7 +103,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         self.assert_brokering_pass_in_config(
@@ -123,7 +123,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         self.assert_brokering_pass_in_config(
@@ -157,7 +157,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
 
         # copy validation output from docker
         copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_submission_dir),
+                                  self.container_submission_dir,
                                   self.test_run_dir)
 
         # assert results
@@ -210,7 +210,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
             # command should crash so we don't get here
             assert False
         except subprocess.CalledProcessError:
-            copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir),
+            copy_files_from_container(self.container_name, self.container_submission_dir,
                                       self.test_run_dir)
             submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
                                              f'.{submission_id}_config.yml')
@@ -259,7 +259,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         copy_files_to_container(self.container_name, os.path.join(eload2_dir, '10_submitted', 'metadata_file'),
                                 self.old_metadata_xlsx)
 
-        # Prepared ELOAD for existing project
+        # Prepared Submission for existing project
         submission_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
                                              '.ELOAD_number_post_validation_json.yml')
         with open(submission_config_template, 'r') as open_file:

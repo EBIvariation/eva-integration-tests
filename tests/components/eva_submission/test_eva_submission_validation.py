@@ -49,7 +49,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
@@ -85,7 +85,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         eload_submission_file = os.path.join(self.test_run_dir, f'{submission_id}',
@@ -129,7 +129,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
 
         # copy validation output from docker
         copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_submission_dir),
+                                  self.container_submission_dir,
                                   self.test_run_dir)
         # assert results
         submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
