@@ -45,7 +45,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         run_quiet_command("run eva_submission prepare_submission script for metadata spreadsheet", prepare_cmd)
 
         # assert submission id written to eload config and present in DB
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
         config_candidates = glob.glob(os.path.join(self.test_run_dir, '**', '.*_config.yml'), recursive=True)
         assert len(config_candidates) == 1, f"Expected exactly one config file, found {config_candidates}"
         submission_config_yml = config_candidates[0]
@@ -83,7 +83,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         run_quiet_command("run eva_submission prepare_submission script for metadata json from webservice", prepare_cmd)
 
         # assert submission id written to eload config
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
         submission_config_yml = os.path.join(self.test_run_dir, f'{self.submission_id}', f'.{self.submission_id}_config.yml')
         assert os.path.isfile(submission_config_yml)
         config = Configuration(submission_config_yml)

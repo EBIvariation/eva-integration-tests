@@ -57,7 +57,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         run_quiet_command("run eva_submission ingest_submission script for archive_only", ingestion_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
@@ -95,7 +95,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         run_quiet_command("run eva_submission ingest_submission script for variant_load and accession", ingestion_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name, os.path.join(self.container_submission_dir), self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
@@ -294,7 +294,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             expected = [('PRJEB105137', 4530)]
             assert set(results) == set(expected)
 
-            query = (f"select eva_submission_id, eva_submission_status_id from evapro.eva_submission "
+            query = ("select eva_submission_id, eva_submission_status_id from evapro.eva_submission "
                      "where eva_submission_id = 'ELOAD_1513'")
             results = get_all_results_for_query(metadata_connection_handle, query)
             expected = [('ELOAD_1513', 6)]
