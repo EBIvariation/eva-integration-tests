@@ -34,7 +34,7 @@
                 <contig-alias.ddl-behaviour>update</contig-alias.ddl-behaviour>
                 <contig-alias.scaffolds-enabled>true</contig-alias.scaffolds-enabled>
 
-                <contig-alias.url>http://contig-alias:8080/contig-alias</contig-alias.url>
+                <contig-alias.url>http://contig-alias:8080/eva/webservices/contig-alias</contig-alias.url>
                 <contig-alias.admin-user>contig_alias_admin_user</contig-alias.admin-user>
                 <contig-alias.admin-password>contig_alias_admin_pass</contig-alias.admin-password>
 
@@ -98,7 +98,7 @@
                 <eva.helpdesk-email>eva-helpdesk@ebi.ac.uk</eva.helpdesk-email>
                 <mailhog.email-messages>http://localhost:8025/api/v1/messages</mailhog.email-messages>
 
-                <contig-alias.url>http://localhost:8081/contig-alias</contig-alias.url>
+                <contig-alias.url>http://localhost:8081/eva/webservices/contig-alias</contig-alias.url>
                 <contig-alias.admin-user></contig-alias.admin-user>
                 <contig-alias.admin-password></contig-alias.admin-password>
                 
