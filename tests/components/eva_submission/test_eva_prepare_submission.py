@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 
@@ -21,9 +22,9 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
 
     submission_account_id = "test_submission_account"
     submission_id = "test_submission_id"
-    container_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
-    container_submission_dir_json_webservice = f'/opt/ftp/private/eva-sub-cli/upload/{submission_account_id}/{submission_id}'
-    container_eload_dir = '/opt/submissions'
+    container_ftp_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
+    container_cli_submission_dir_json_webservice = f'/opt/ftp/private/eva-sub-cli/upload/{submission_account_id}/{submission_id}'
+    container_submission_dir = '/opt/submissions'
 
     def setUp(self):
         super().setUp()
@@ -35,7 +36,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         # copy all required file into container
         self.setup_test_data_for_metadata_spreadsheet()
 
-        log_file = f'{self.container_eload_dir}/prepare.out'
+        log_file = f'{self.container_submission_dir}/prepare.out'
         self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
@@ -44,13 +45,15 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         run_quiet_command("run eva_submission prepare_submission script for metadata spreadsheet", prepare_cmd)
 
         # assert submission id written to eload config and present in DB
-        copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
-        eload_config_yml = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                        f'.ELOAD_{self.eload_number}_config.yml')
-        assert os.path.isfile(eload_config_yml)
-        config = Configuration(eload_config_yml)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+        config_candidates = glob.glob(os.path.join(self.test_run_dir, '**', '.*_config.yml'), recursive=True)
+        assert len(config_candidates) == 1, f"Expected exactly one config file, found {config_candidates}"
+        submission_config_yml = config_candidates[0]
+        config = Configuration(submission_config_yml)
         assert config['submission']['submission_id'] is not None
         submission_id = config['submission']['submission_id']
+        submission_config_yml_name = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
+        assert os.path.isfile(submission_config_yml_name)
 
         with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
             query = (
@@ -71,7 +74,7 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         # copy all required file into container
         self.setup_test_data_for_metadata_json_from_webservice()
 
-        log_file = f'{self.container_eload_dir}/prepare.out'
+        log_file = f'{self.container_submission_dir}/prepare.out'
         self.container_log_files.append((self.container_name, log_file))
         # Run preparation from command line
         prepare_cmd = (
@@ -80,11 +83,10 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         run_quiet_command("run eva_submission prepare_submission script for metadata json from webservice", prepare_cmd)
 
         # assert submission id written to eload config
-        copy_files_from_container(self.container_name, os.path.join(self.container_eload_dir), self.test_run_dir)
-        eload_config_yml = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                        f'.ELOAD_{self.eload_number}_config.yml')
-        assert os.path.isfile(eload_config_yml)
-        config = Configuration(eload_config_yml)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+        submission_config_yml = os.path.join(self.test_run_dir, f'{self.submission_id}', f'.{self.submission_id}_config.yml')
+        assert os.path.isfile(submission_config_yml)
+        config = Configuration(submission_config_yml)
         assert config['submission']['submission_id'] == self.submission_id
 
         with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
@@ -99,9 +101,9 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
         run_docker_cmd(f"Create submission directory in container",
-                       f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
-        copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
-        copy_files_to_container(self.container_name, self.container_submission_dir,
+                       f"docker exec {self.container_name} mkdir -p {self.container_submission_dir}")
+        copy_files_to_container(self.container_name, self.container_ftp_submission_dir, vcf_file)
+        copy_files_to_container(self.container_name, self.container_ftp_submission_dir,
                                 os.path.join(self.resources_directory, 'metadata_files',
                                              'EVA_Submission_v2.0_cpombe.xlsx'))
 
@@ -109,8 +111,8 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
         # copy vcf file to the correct dir in container
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
         run_docker_cmd(f"Create submission directory in container",
-                       f"docker exec {self.container_name} mkdir -p {self.container_eload_dir}")
-        copy_files_to_container(self.container_name, self.container_submission_dir_json_webservice, vcf_file)
+                       f"docker exec {self.container_name} mkdir -p {self.container_submission_dir}")
+        copy_files_to_container(self.container_name, self.container_cli_submission_dir_json_webservice, vcf_file)
 
         # insert data in eva-submission-ws tables
         with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:

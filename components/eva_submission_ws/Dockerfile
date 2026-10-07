@@ -1,23 +1,52 @@
-FROM tomcat:9.0-jdk11
+# Build stage
+FROM maven:3.9-eclipse-temurin-21 AS build
 
-RUN apt update && apt -qq install -y git maven
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY maven-settings.xml /root
+WORKDIR /app
 
-# make manager app available
-COPY eva_submission_ws/tomcat-users.xml /usr/local/tomcat/conf/
-RUN cp -avT /usr/local/tomcat/webapps.dist/manager /usr/local/tomcat/webapps/manager \
- && sed -i 's|<Valve className="org.apache.catalina.valves.RemoteAddrValve".*|<!-- Removed RemoteAddrValve for all IP access -->|' /usr/local/tomcat/webapps/manager/META-INF/context.xml
+# Clone the source code
+RUN git clone https://github.com/EBIvariation/eva-submission-ws.git .
 
-WORKDIR /usr/local/software
+# Copy pom.xml first to leverage Docker layer caching for dependencies
+RUN mvn dependency:go-offline -B
 
-# deploy eva-submission-ws
-RUN git clone --single-branch https://github.com/EBIvariation/eva-submission-ws.git
-RUN mvn package -s /root/maven-settings.xml -f eva-submission-ws/pom.xml -P docker -DskipTests
-RUN cp eva-submission-ws/target/eva-submission-ws-*.war.original /usr/local/tomcat/webapps/eva#webservices#submission-ws.war
+# Copy source code and build
+RUN mvn clean package -DskipTests -Dmaven.gitcommitid.skip=true
+
+# Runtime stage
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN groupadd -r eva_submission_ws && useradd -r -g eva_submission_ws eva_submission_ws
+
+# Create config directory for runtime application.properties mount
+RUN mkdir -p /app/config && chown -R eva_submission_ws:eva_submission_ws /app
+
+# Copy the JAR file from build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Copy application.properties from your local build context
+COPY eva_submission_ws/application.properties /app/config/application.properties
+
+# Set ownership
+RUN chown -R eva_submission_ws:eva_submission_ws /app
+
+USER eva_submission_ws
 
 EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/eva/webservices/submission-ws/actuator/health || exit 1
 
+# JVM options for containerized environments
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
 
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

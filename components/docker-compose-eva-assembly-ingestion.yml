@@ -18,6 +18,8 @@ services:
         condition: service_healthy
       mongo_db:
         condition: service_healthy
+      contig-alias:
+        condition: service_healthy
     networks:
       - eva_network
 
@@ -36,6 +38,12 @@ services:
         condition: service_healthy
     networks:
       - eva_network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/eva/webservices/contig-alias/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   postgres_db:
     image: postgres_db_test

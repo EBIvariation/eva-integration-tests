@@ -58,31 +58,32 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number1)
+
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number1} > {self.container_eload_dir}/ELOAD_{self.eload_number1}/validation.out 2>&1'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {self.container_submission_dir}/{submission_id}/validation.out 2>&1'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number1}/broker.out'
+        log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number1} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id} > {log_file} 2>&1'"
         )
         # Run brokering from command line
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number1}',
-                                         f'.ELOAD_{self.eload_number1}_config.yml')
-        self.assert_brokering_pass_in_config(eload_config_file)
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
+        self.assert_brokering_pass_in_config(submission_config_file)
 
-        config = Configuration(eload_config_file)
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
@@ -90,41 +91,43 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
 
     @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number2}/broker.out'
+        submission_id = f'ELOAD_{self.eload_number2}'
+        self.put_submission_in_db(submission_id, self.eload_number2)
+
+        log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number2} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id} > {log_file} 2>&1'"
         )
         # Run brokering from command line
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number2}', f'.ELOAD_{self.eload_number2}_config.yml'))
+            os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml'))
 
     @log_on_failure
     def test_submission_with_existing_project(self):
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number3}/broker.out'
+        submission_id = f'ELOAD_{self.eload_number3}'
+        self.put_submission_in_db(submission_id, self.eload_number3)
+
+        log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number3} --project_accession PRJEB12770 > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id} --project_accession PRJEB12770 > {log_file} 2>&1'"
         )
         # Run brokering from command line
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
-        copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
-                                  self.test_run_dir)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
         self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number3}', f'.ELOAD_{self.eload_number3}_config.yml'))
+            os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml'))
 
     @log_on_failure
     def test_submission_with_ena_xml(self):
@@ -135,31 +138,34 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         # Run preparation from command line
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
 
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number4)
+
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number4} > {self.container_eload_dir}/ELOAD_{self.eload_number4}/validation.out 2>&1'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {self.container_submission_dir}/{submission_id}/validation.out 2>&1'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number4}/broker.out'
+        log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number4} --output_format xml > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id} --output_format xml > {log_file} 2>&1'"
         )
         # Run brokering from command line
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # copy validation output from docker
         copy_files_from_container(self.container_name,
-                                  os.path.join(self.container_eload_dir),
+                                  self.container_submission_dir,
                                   self.test_run_dir)
 
         # assert results
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number4}',
-                                         f'.ELOAD_{self.eload_number4}_config.yml')
-        self.assert_brokering_pass_in_config(eload_config_file)
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
+        self.assert_brokering_pass_in_config(submission_config_file)
 
-        config = Configuration(eload_config_file)
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
@@ -172,8 +178,12 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number5}"
         )
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number5)
+
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number5} > {self.container_eload_dir}/ELOAD_{self.eload_number5}/validation.out 2>&1'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {self.container_submission_dir}/{submission_id}/validation.out 2>&1'"
         )
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
 
@@ -190,22 +200,21 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         os.remove(tmp_yml)
 
         # Run brokering, should fail but still update the status
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number5}/broker.out'
+        log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --eload {self.eload_number5} --output_format xml > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id} --output_format xml > {log_file} 2>&1'"
         )
         try:
             run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
             # command should crash so we don't get here
             assert False
         except subprocess.CalledProcessError:
-            copy_files_from_container(self.container_name,
-                                      os.path.join(self.container_eload_dir),
+            copy_files_from_container(self.container_name, self.container_submission_dir,
                                       self.test_run_dir)
-            eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number5}',
-                                             f'.ELOAD_{self.eload_number5}_config.yml')
-            config = Configuration(eload_config_file)
+            submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                             f'.{submission_id}_config.yml')
+            config = Configuration(submission_config_file)
             submission_id = config.query('submission', 'submission_id')
             assert submission_id is not None
             self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'FAILURE')
@@ -232,34 +241,34 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
                                 os.path.join(self.fasta_files_dir, 'GCA_000002945.2.fa'))
 
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
-        copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
+        copy_files_to_container(self.container_name, self.container_ftp_submission_dir, vcf_file)
         if self.metadata_xlsx:
-            copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
+            copy_files_to_container(self.container_name, self.container_ftp_submission_dir, self.metadata_xlsx)
 
-        # Prepared ELOAD with old spreadsheet
-        eload_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
+        # Prepared Submission with old spreadsheet
+        submission_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
                                              '.ELOAD_number_post_validation_spreadsheet.yml')
-        with open(eload_config_template, 'r') as open_file:
+        with open(submission_config_template, 'r') as open_file:
             open_file_content = open_file.read().format(ELOAD_number=str(self.eload_number2))
-        eload_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number2}_config.yml')
-        with open(eload_config_file, 'w') as open_file:
+        submission_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number2}_config.yml')
+        with open(submission_config_file, 'w') as open_file:
             open_file.write(open_file_content)
-        eload2_dir = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number2}')
-        copy_files_to_container(self.container_name, eload2_dir, eload_config_file)
+        eload2_dir = os.path.join(self.container_submission_dir, f'ELOAD_{self.eload_number2}')
+        copy_files_to_container(self.container_name, eload2_dir, submission_config_file)
         copy_files_to_container(self.container_name, os.path.join(eload2_dir, '10_submitted', 'vcf_files'), vcf_file)
         copy_files_to_container(self.container_name, os.path.join(eload2_dir, '10_submitted', 'metadata_file'),
                                 self.old_metadata_xlsx)
 
-        # Prepared ELOAD for existing project
-        eload_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
+        # Prepared Submission for existing project
+        submission_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
                                              '.ELOAD_number_post_validation_json.yml')
-        with open(eload_config_template, 'r') as open_file:
+        with open(submission_config_template, 'r') as open_file:
             open_file_content = open_file.read().format(ELOAD_number=str(self.eload_number3))
-        eload_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number3}_config.yml')
-        with open(eload_config_file, 'w') as open_file:
+        submission_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number3}_config.yml')
+        with open(submission_config_file, 'w') as open_file:
             open_file.write(open_file_content)
-        eload3_dir = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number3}')
-        copy_files_to_container(self.container_name, eload3_dir, eload_config_file)
+        eload3_dir = os.path.join(self.container_submission_dir, f'ELOAD_{self.eload_number3}')
+        copy_files_to_container(self.container_name, eload3_dir, submission_config_file)
         copy_files_to_container(self.container_name, os.path.join(eload3_dir, '10_submitted', 'vcf_files'), vcf_file)
         copy_files_to_container(self.container_name, os.path.join(eload3_dir, '10_submitted', 'metadata_file'),
                                 self.metadata_json)
