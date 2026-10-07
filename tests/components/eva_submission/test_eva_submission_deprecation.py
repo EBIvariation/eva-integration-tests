@@ -24,7 +24,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
     maven_profile = 'localhost'
 
     project_accession = 'PRJEB12345'
-    eload_id = 1
+    submission_id = '1'
     assembly_accession = 'GCA_000004515.4'
     taxonomy_id = 3847
 
@@ -90,7 +90,7 @@ class TestEvaSubmissionDeprecation(TestWithDockerCompose):
                 "ON CONFLICT DO NOTHING"
             )
             execute_query(conn,
-                "INSERT INTO evapro.project_eva_submission (project_accession, old_ticket_id, eload_id) "
+                "INSERT INTO evapro.project_eva_submission (project_accession, old_ticket_id, submission_id) "
                 "VALUES ('PRJEB12345', 1, 1) "
                 "ON CONFLICT DO NOTHING"
             )

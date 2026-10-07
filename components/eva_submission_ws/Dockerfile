@@ -7,7 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 WORKDIR /app
 
 # Clone the source code
+<<<<<<< HEAD
 # TODO: test the split-large-files branch. Revert before merging
+=======
+>>>>>>> b165fe6 (EVA-4233 Updates for replacing eload with submission (#84))
 RUN git clone https://github.com/EBIvariation/eva-submission-ws.git .
 
 # Copy pom.xml first to leverage Docker layer caching for dependencies
@@ -45,7 +48,11 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+<<<<<<< HEAD
     CMD curl -f http://localhost:8080/eva/webservices/submission-ws/readyz || exit 1
+=======
+    CMD curl -f http://localhost:8080/eva/webservices/submission-ws/actuator/health || exit 1
+>>>>>>> b165fe6 (EVA-4233 Updates for replacing eload with submission (#84))
 
 # JVM options for containerized environments
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"

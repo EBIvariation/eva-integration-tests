@@ -45,30 +45,34 @@ class TestEvaSubmissionUpdateSubmissionTracking(TestEvaSubmission):
             f"docker exec {self.container_name} prepare_submission.py --submitter username --ftp_box 1 --eload {self.eload_number}"
         )
         run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+
+        # get submission id from the table
+        submission_id = self.get_submission_id_from_db(self.eload_number)
+
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --eload {self.eload_number}'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id}'"
         )
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
         brokering_cmd = (
-            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --eload {self.eload_number}'"
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --submission_id {submission_id}'"
         )
         run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
 
         # Run update submission tracking from command line
-        log_file = f'{self.container_eload_dir}/ELOAD_{self.eload_number}/update_release_date.out'
+        log_file = f'{self.container_submission_dir}/{submission_id}/update_release_date.out'
         self.container_log_files.append((self.container_name, log_file))
         new_release_date = date.today() + timedelta(weeks=48)
         new_release_date_str = new_release_date.strftime('%Y-%m-%d')
         update_release_date_cmd = (
-            f"docker exec {self.container_name} sh -c 'update_submission_tracking.py --eload_id {self.eload_number} --release_date {new_release_date_str} > {log_file} 2>&1'"
+            f"docker exec {self.container_name} sh -c 'update_submission_tracking.py --submission_id {submission_id} --release_date {new_release_date_str} > {log_file} 2>&1'"
         )
         run_quiet_command("run eva_submission update_submission_tracking script", update_release_date_cmd)
 
         # Assert results
-        copy_files_from_container(self.container_name, self.container_eload_dir, self.test_run_dir)
-        eload_config_file = os.path.join(self.test_run_dir, f'ELOAD_{self.eload_number}',
-                                         f'.ELOAD_{self.eload_number}_config.yml')
-        config = Configuration(eload_config_file)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}',
+                                         f'.{submission_id}_config.yml')
+        config = Configuration(submission_config_file)
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
 
@@ -98,7 +102,7 @@ class TestEvaSubmissionUpdateSubmissionTracking(TestEvaSubmission):
         os.remove(tmp_yml)
 
         # Prepare metadata spreadsheet
-        copy_files_to_container(self.container_name, self.container_submission_dir, self.metadata_xlsx)
+        copy_files_to_container(self.container_name, self.container_ftp_submission_dir, self.metadata_xlsx)
 
         # Prepare reference genome
         copy_files_to_container(self.container_name, self.container_reference_genome_dir,
@@ -107,4 +111,4 @@ class TestEvaSubmissionUpdateSubmissionTracking(TestEvaSubmission):
                                 os.path.join(self.fasta_files_dir, 'GCA_000002945.2.fa'))
 
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
-        copy_files_to_container(self.container_name, self.container_submission_dir, vcf_file)
+        copy_files_to_container(self.container_name, self.container_ftp_submission_dir, vcf_file)
