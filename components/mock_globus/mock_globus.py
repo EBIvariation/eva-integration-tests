@@ -92,12 +92,25 @@ def ls(endpoint_id):
     }), 200
 
 
+# Like the real Globus HTTPS endpoint, reject uploads larger than 1 GiB with a 413 so that eva-sub-cli splits them.
+# It must stay above eva-sub-cli's part size (512 MiB)
+MAX_UPLOAD_SIZE = int(os.environ.get('MAX_UPLOAD_SIZE', 1024 * 1024 * 1024))
+
+
 @app.route('/<path:full_path>', methods=['PUT'])
 def upload_file(full_path):
+    if request.content_length is not None and request.content_length > MAX_UPLOAD_SIZE:
+        # Read the body before answering so that the client receives the 413 instead of a closed connection
+        while request.stream.read(1024 * 1024):
+            pass
+        return jsonify({"status": "rejected", "message": "Request Entity Too Large"}), 413
     filepath = os.path.join(UPLOAD_DIR, full_path)
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'wb') as f:
-        f.write(request.data)
+        chunk = request.stream.read(1024 * 1024)
+        while chunk:
+            f.write(chunk)
+            chunk = request.stream.read(1024 * 1024)
     return jsonify({"status": "uploaded", "filename": full_path}), 200
 
 

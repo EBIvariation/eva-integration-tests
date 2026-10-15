@@ -35,8 +35,8 @@ def build_from_docker_compose(docker_compose_file, docker_path='docker'):
 
 
 def stop_and_remove_all_containers_in_docker_compose(docker_compose_file, docker_path='docker'):
-    run_docker_cmd("stop and remove all containers present in docker compose file",
-                   f"{docker_path} compose -f {docker_compose_file} down")
+    run_docker_cmd("stop and remove all containers and volumes present in docker compose file",
+                   f"{docker_path} compose -f {docker_compose_file} down -v")
 
 
 def start_all_containers_in_docker_compose(docker_compose_file, docker_path='docker'):
