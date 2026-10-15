@@ -92,9 +92,9 @@ def ls(endpoint_id):
     }), 200
 
 
-# Like the real Globus HTTPS endpoint, reject uploads larger than 1 GiB with a 413 so that eva-sub-cli splits them.
-# It must stay above eva-sub-cli's part size (512 MiB)
-MAX_UPLOAD_SIZE = int(os.environ.get('MAX_UPLOAD_SIZE', 1024 * 1024 * 1024))
+# Like the real Globus HTTPS endpoint, reject large uploads with a 413 so that eva-sub-cli splits them.
+# It must stay above the part size of eva-sub-cli set with UPLOAD_PART_SIZE
+MAX_UPLOAD_SIZE = int(os.environ.get('MAX_UPLOAD_SIZE', 1024 * 1024))
 
 
 @app.route('/<path:full_path>', methods=['PUT'])

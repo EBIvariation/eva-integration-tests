@@ -38,9 +38,10 @@ class TestEvaSubCliToEvaSubmission(TestEvaSubCli):
 
     @log_on_failure
     def test_large_file_submitted_by_eva_sub_cli_is_prepared_by_eva_submission(self):
-        # mock-globus rejects uploads larger than 1 GiB: this file is uploaded in parts of 512 MiB
+        # mock-globus rejects uploads larger than 1 MiB and eva-sub-cli uploads in parts of 512 KiB (UPLOAD_PART_SIZE set
+        # in the docker compose file): this file is uploaded in 3 parts
         large_file_name = 'large_file.vcf.gz'
-        large_file_size = 1024 * 1024 * 1024 + 8 * 1024 * 1024
+        large_file_size = 1024 * 1024 + 8 * 1024
         large_file = os.path.join(self.container_submission_dir, large_file_name)
         run_docker_cmd("create a large file in the container",
                        f"docker exec {self.container_name} sh -c 'head -c {large_file_size} /dev/urandom > {large_file}'")

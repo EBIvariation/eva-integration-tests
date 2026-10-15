@@ -13,6 +13,8 @@ services:
     container_name: eva_sub_cli_test
     environment:
       SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
+      # Upload files rejected by mock-globus in parts of 512 KiB, below the 1 MiB upload limit of mock-globus
+      UPLOAD_PART_SIZE: 524288
     command: tail -f /dev/null
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
