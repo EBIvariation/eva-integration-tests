@@ -35,6 +35,7 @@ jobs:
         test-path:
           - tests/components/eva_sub_cli/
           - tests/components/eva_submission/
+          - tests/components/eva_sub_cli_to_eva_submission/
           - tests/components/eva_assembly_ingestion/
           - tests/components/eva_release_automation/
     env:

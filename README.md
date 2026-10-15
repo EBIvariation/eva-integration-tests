@@ -48,6 +48,7 @@ Each suite has its own docker-compose file and its own directory of pytest files
 |-------|-------------|----------------|----------------|
 | EVA Submission | `docker-compose-eva-submission.yml` | `eva_submission_test` | `tests/components/eva_submission/` |
 | EVA Sub CLI | `docker-compose-eva-sub-cli.yml` | `eva_sub_cli_test` | `tests/components/eva_sub_cli/` |
+| EVA Sub CLI to EVA Submission | `docker-compose-eva-sub-cli-to-eva-submission.yml` | `eva_sub_cli_test`, `eva_submission_test` | `tests/components/eva_sub_cli_to_eva_submission/` |
 | Assembly Ingestion | `docker-compose-eva-assembly-ingestion.yml` | `eva_assembly_ingestion_test` | `tests/components/eva_assembly_ingestion/` |
 | Release Automation | `docker-compose-eva-release-automation.yml` | `eva_release_automation_test` | `tests/components/eva_release_automation/` |
 
@@ -108,6 +109,16 @@ The sub-CLI upload and submission tests also require ENA credentials:
 WEBIN_TEST_USER_EMAIL=your@email \
 WEBIN_TEST_USER_PASSWORD=******* \
 PYTHONPATH=. pytest tests/components/eva_sub_cli/
+```
+
+The end-to-end test between eva-sub-cli and eva-submission requires the same ENA credentials. eva-sub-cli uploads a file
+in parts to `mock-globus`, which shares a volume with the eva-sub-cli upload directory of the eva-submission FTP, and
+eva-submission reassembles it. `mock-globus` rejects uploads larger than 1 MiB and the docker compose file lowers the
+part size of eva-sub-cli (`UPLOAD_PART_SIZE`) so that a small file is enough.
+```bash
+WEBIN_TEST_USER_EMAIL=your@email \
+WEBIN_TEST_USER_PASSWORD=******* \
+PYTHONPATH=. pytest tests/components/eva_sub_cli_to_eva_submission/
 ```
 
 **NOTE: The `eva_sub_cli` image is built for `linux/amd64`. On Apple Silicon Macs (M1/M2/M3) enable "Use Rosetta for x86/64 emulation on Apple Silicon" in Docker Desktop settings to avoid platform mismatch warnings or build failures.**

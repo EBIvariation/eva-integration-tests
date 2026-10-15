@@ -1,0 +1,136 @@
+services:
+  eva_sub_cli:
+    image: eva_sub_cli_test
+    build:
+      context: ./eva_sub_cli
+      platforms:
+        - "linux/amd64"
+      dockerfile: Dockerfile
+      args:
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
+    container_name: eva_sub_cli_test
+    environment:
+      SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
+      # Upload files rejected by mock-globus in parts of 512 KiB, below the 1 MiB upload limit of mock-globus
+      UPLOAD_PART_SIZE: 524288
+    command: tail -f /dev/null
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      eva-submission-ws:
+        condition: service_healthy
+    networks:
+      - eva_network
+
+  eva_submission:
+    image: eva_submission_test
+    build:
+      # context to where the maven file is located
+      context: .
+      dockerfile: eva_submission/Dockerfile
+      args:
+        SOURCE_GITHUB_REPOSITORY: $SOURCE_GITHUB_REPOSITORY
+        SOURCE_GITHUB_REF: $SOURCE_GITHUB_REF
+        SOURCE_GITHUB_SHA: $SOURCE_GITHUB_SHA
+    container_name: eva_submission_test
+    environment:
+      SUBMISSION_WS_URL: http://eva-submission-ws:8080/eva/webservices/submission-ws/v1/
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # The files uploaded to mock-globus are found in the eva-sub-cli upload directory of the FTP
+      - globus_uploads:/opt/ftp/private/eva-sub-cli/upload
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      eva-submission-ws:
+        condition: service_healthy
+      contig-alias:
+        condition: service_healthy
+    networks:
+      - eva_network
+
+  eva-submission-ws:
+    image: eva_submission_ws_test
+    build:
+      context: .
+      dockerfile: eva_submission_ws/Dockerfile
+    container_name: eva_submission_ws_test
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      mock-globus:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    networks:
+      - eva_network
+
+  contig-alias:
+    image: contig_alias_ws_test
+    build:
+      # context to where the maven file is located
+      context: .
+      dockerfile: contig_alias_ws/Dockerfile
+    container_name: contig_alias_ws_test
+    restart: always
+    ports:
+      - 8081:8080
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    networks:
+      - eva_network
+
+  postgres_db:
+    image: postgres_db_test
+    build:
+      context: ./postgres_db
+      dockerfile: Dockerfile
+    container_name: postgres_db_test
+    restart: always
+    environment:
+      - POSTGRES_USER=root_user
+      - POSTGRES_PASSWORD=root_pass
+    ports:
+      - 5432:5432
+    networks:
+      - eva_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root_user" ]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  mock-globus:
+    image: mock_globus_test
+    build:
+      context: ./mock_globus
+      dockerfile: Dockerfile
+    container_name: mock_globus_test
+    restart: always
+    ports:
+      - 5000:5000
+    volumes:
+      - globus_uploads:/tmp/mock_globus_uploads
+    networks:
+      - eva_network
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - eva_network
+
+volumes:
+  globus_uploads:
+
+networks:
+  eva_network:
+    name: eva_network
