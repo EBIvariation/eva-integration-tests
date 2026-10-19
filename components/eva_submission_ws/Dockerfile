@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 WORKDIR /app
 
 # Clone the source code
+# TODO: test the split-large-files branch. Revert before merging
 RUN git clone https://github.com/EBIvariation/eva-submission-ws.git .
 
 # Copy pom.xml first to leverage Docker layer caching for dependencies

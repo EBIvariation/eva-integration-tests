@@ -23,6 +23,7 @@ class WebinTestUser:
             "address": "Welcome Genome Campus",
             "metagenomeSubmitter": False,
             "metagenomicsAnalysis": False,
+            "absConsent": True,
             "suspended": "N",
             "webinPassword": self.webin_test_user_password,
             "submissionContacts": [
