@@ -111,10 +111,7 @@ WEBIN_TEST_USER_PASSWORD=******* \
 PYTHONPATH=. pytest tests/components/eva_sub_cli/
 ```
 
-The end-to-end test between eva-sub-cli and eva-submission requires the same ENA credentials. eva-sub-cli uploads a file
-in parts to `mock-globus`, which shares a volume with the eva-sub-cli upload directory of the eva-submission FTP, and
-eva-submission reassembles it. `mock-globus` rejects uploads larger than 1 MiB and the docker compose file lowers the
-part size of eva-sub-cli (`UPLOAD_PART_SIZE`) so that a small file is enough.
+The end-to-end test between eva-sub-cli and eva-submission requires the same ENA credentials as above. 
 ```bash
 WEBIN_TEST_USER_EMAIL=your@email \
 WEBIN_TEST_USER_PASSWORD=******* \
