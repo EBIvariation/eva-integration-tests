@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Clone the source code
 # TODO: test the split-large-files branch. Revert before merging
-RUN git clone --branch split-large-files https://github.com/EBIvariation/eva-submission-ws.git .
+RUN git clone https://github.com/EBIvariation/eva-submission-ws.git .
 
 # Copy pom.xml first to leverage Docker layer caching for dependencies
 RUN mvn dependency:go-offline -B
