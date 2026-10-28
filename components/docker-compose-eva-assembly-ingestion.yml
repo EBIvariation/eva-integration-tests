@@ -39,7 +39,7 @@ services:
     networks:
       - eva_network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/eva/webservices/contig-alias/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/eva/webservices/contig-alias/readyz || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 30
