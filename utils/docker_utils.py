@@ -62,6 +62,12 @@ def read_file_from_container(container_name, file_path, docker_path='docker'):
                              return_process_output=True)
 
 
+def read_logs_from_container(container_name, docker_path='docker'):
+    return run_quiet_command("read container logs",
+                             f'{docker_path} logs {container_name}',
+                             return_process_output=True)
+
+
 def read_file_from_local(file_path):
     with open(file_path) as f:
         return f.read()
