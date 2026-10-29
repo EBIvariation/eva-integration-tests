@@ -1,6 +1,5 @@
 import os
 import re
-import shutil
 
 from ebi_eva_common_pyutils.logger import logging_config as log_cfg
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
@@ -25,6 +24,7 @@ def extract_nextflow_work_dirs_from_log(input_file):
                     yield match.group(1)
 
 class TestEvaSubmission(TestWithDockerCompose):
+    initialize_submission_account = True
     vcf_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'vcf_files')
     fasta_files_dir = os.path.join(TestWithDockerCompose.resources_directory, 'fasta_files')
     assembly_reports_dir = os.path.join(TestWithDockerCompose.resources_directory, 'assembly_reports')
