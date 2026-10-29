@@ -84,6 +84,3 @@ class TestEvaSubmission(TestWithDockerCompose):
             query = (f"insert into eva_submissions.submission_eload (submission_id, eload, source) "
                      f"values ('{submission_id}', {eload_number}, '{source_type}')")
             execute_query(metadata_connection_handle, query)
-
-
-
