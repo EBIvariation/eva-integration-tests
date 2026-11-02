@@ -19,7 +19,7 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         
         # create metadata xlsx file
         shutil.copyfile(
-            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
+            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v3.1.0_cpombe.xlsx'),
             self.metadata_xlsx
         )
 

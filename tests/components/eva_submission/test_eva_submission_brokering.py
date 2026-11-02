@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import shutil
@@ -25,7 +26,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
 
         # create metadata xlsx file
         shutil.copyfile(
-            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
+            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v3.1.0_cpombe.xlsx'),
             self.metadata_xlsx
         )
         shutil.copyfile(
@@ -45,6 +46,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         self.eload_number3 = random.randint(1, 1000000)
         self.eload_number4 = random.randint(1, 1000000)
         self.eload_number5 = random.randint(1, 1000000)
+        self.eload_number6 = random.randint(1, 1000000)
 
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
@@ -126,8 +128,53 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
 
         # assert results
-        self.assert_brokering_pass_in_config(
-            os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml'))
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
+        self.assert_brokering_pass_in_config(submission_config_file)
+        # The sample was created in BioSamples from the bioSampleObject
+        sample_record = self.get_sample_records(submission_config_file)[0]
+        assert sample_record['analysisAlias'] == ['AA']
+        assert sample_record['name'] == 'S1'
+        assert sample_record['action'] == 'create'
+        self.assert_metadata_json_updated_with_sample_records(submission_id, submission_config_file)
+
+    @log_on_failure
+    def test_submission_with_pre_registered_samples(self):
+        # Broker a first submission to get a sample registered in BioSamples
+        submission_id1 = f'ELOAD_{self.eload_number3}'
+        self.put_submission_in_db(submission_id1, self.eload_number3)
+        log_file = f'{self.container_submission_dir}/{submission_id1}/broker.out'
+        self.container_log_files.append((self.container_name, log_file))
+        brokering_cmd = (
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id1} --project_accession PRJEB12770 > {log_file} 2>&1'"
+        )
+        run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+        submission_config_file1 = os.path.join(self.test_run_dir, submission_id1, f'.{submission_id1}_config.yml')
+        sample_accession = self.get_sample_records(submission_config_file1)[0]['accession']
+
+        # Second submission referencing the sample by its accession only
+        submission_id2 = f'ELOAD_{self.eload_number6}'
+        self.put_submission_in_db(submission_id2, self.eload_number6, create_account=False)
+        self.copy_submission_with_metadata_json_to_container(
+            self.eload_number6,
+            {'analysisAlias': ['AA'], 'sampleInVCF': 'S1', 'bioSampleAccession': sample_accession}
+        )
+        log_file = f'{self.container_submission_dir}/{submission_id2}/broker.out'
+        self.container_log_files.append((self.container_name, log_file))
+        brokering_cmd = (
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id2} --project_accession PRJEB12770 > {log_file} 2>&1'"
+        )
+        run_quiet_command("run eva_submission broker_submission script", brokering_cmd)
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+
+        # assert results
+        submission_config_file2 = os.path.join(self.test_run_dir, submission_id2, f'.{submission_id2}_config.yml')
+        self.assert_brokering_pass_in_config(submission_config_file2)
+        # The sample was not modified and its name was retrieved from BioSamples
+        assert self.get_sample_records(submission_config_file2) == [{
+            'accession': sample_accession, 'analysisAlias': ['AA'], 'sampleInVCF': 'S1', 'name': 'S1', 'action': 'None'
+        }]
+        self.assert_metadata_json_updated_with_sample_records(submission_id2, submission_config_file2)
 
     @log_on_failure
     def test_submission_with_ena_xml(self):
@@ -141,8 +188,10 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         # get submission id from the table
         submission_id = self.get_submission_id_from_db(self.eload_number4)
 
+        log_file = f'{self.container_submission_dir}/{submission_id}/validation.out'
+        self.container_log_files.append((self.container_name, log_file))
         validation_cmd = (
-            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {self.container_submission_dir}/{submission_id}/validation.out 2>&1'"
+            f"docker exec {self.container_name} sh -c 'validate_submission.py --submission_id {submission_id} > {log_file} 2>&1'"
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
@@ -278,9 +327,14 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         assert os.path.isfile(eload_config_yml)
         config = Configuration(eload_config_yml)
 
-        # BioSample brokering passes
+        # BioSample brokering passes and records the sample present in the VCF
         assert config.query('brokering', 'Biosamples', 'pass') is True
-        assert config.query('brokering', 'Biosamples', 'Samples', 'S1', ret_default='').startswith('SAMEA')
+        assert config.query('brokering', 'Biosamples', 'Samples') is None
+        sample_records = config.query('brokering', 'Biosamples', 'sample_records', ret_default=[])
+        assert len(sample_records) == 1
+        assert sample_records[0]['accession'].startswith('SAMEA')
+        assert sample_records[0]['sampleInVCF'] == 'S1'
+        assert sample_records[0]['analysisAlias']
 
         # ENA brokering passes
         assert config.query('brokering', 'ena', 'pass') is True
@@ -305,3 +359,41 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
             assert len(results) > 0
             analysis_accessions = [r[0] for r in results]
             assert analysis_accessions[0].startswith('ERZ')
+
+    @staticmethod
+    def get_sample_records(eload_config_yml):
+        return Configuration(eload_config_yml).query('brokering', 'Biosamples', 'sample_records')
+
+    def assert_metadata_json_updated_with_sample_records(self, submission_id, eload_config_yml):
+        # The metadata sent to ENA contains the accessions from the sample records, in the same order
+        brokering_json = os.path.join(self.test_run_dir, submission_id, '18_brokering', 'ena', 'metadata_json.json')
+        with open(brokering_json) as open_file:
+            samples = json.load(open_file)['sample']
+        sample_records = self.get_sample_records(eload_config_yml)
+        assert [sample['bioSampleAccession'] for sample in samples] == [r['accession'] for r in sample_records]
+        assert [sample['sampleInVCF'] for sample in samples] == [r['sampleInVCF'] for r in sample_records]
+        assert [sample['analysisAlias'] for sample in samples] == [[f'{submission_id}_AA']]
+
+    def copy_submission_with_metadata_json_to_container(self, eload_number, sample):
+        """Create a validated submission whose metadata JSON contains a single sample."""
+        with open(self.metadata_json) as open_file:
+            metadata_json = json.load(open_file)
+        metadata_json['sample'] = [sample]
+        eload_metadata_json = os.path.join(self.test_run_dir, f'ELOAD_{eload_number}', 'eva_sub_cli_metadata.json')
+        os.makedirs(os.path.dirname(eload_metadata_json), exist_ok=True)
+        with open(eload_metadata_json, 'w') as open_file:
+            json.dump(metadata_json, open_file)
+
+        submission_config_template = os.path.join(self.resources_directory, 'ELOAD_configs',
+                                                  '.ELOAD_number_post_validation_json.yml')
+        with open(submission_config_template, 'r') as open_file:
+            open_file_content = open_file.read().format(ELOAD_number=str(eload_number))
+        submission_config_file = os.path.join(self.test_run_dir, f'.ELOAD_{eload_number}_config.yml')
+        with open(submission_config_file, 'w') as open_file:
+            open_file.write(open_file_content)
+        eload_dir = os.path.join(self.container_submission_dir, f'ELOAD_{eload_number}')
+        copy_files_to_container(self.container_name, eload_dir, submission_config_file)
+        copy_files_to_container(self.container_name, os.path.join(eload_dir, '10_submitted', 'vcf_files'),
+                                os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf'))
+        copy_files_to_container(self.container_name, os.path.join(eload_dir, '10_submitted', 'metadata_file'),
+                                eload_metadata_json)

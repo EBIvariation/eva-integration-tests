@@ -64,12 +64,13 @@ class TestEvaSubmission(TestWithDockerCompose):
             results = get_all_results_for_query(metadata_connection_handle, query)
             return results[0][0]
 
-    def put_submission_in_db(self, submission_id, eload_number, source_type="email"):
+    def put_submission_in_db(self, submission_id, eload_number, source_type="email", create_account=True):
         with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
-            query = (
-                f"INSERT INTO eva_submissions.submission_account(id, user_id, login_type, primary_email, first_name, last_name) "
-                f"VALUES('Webin-9999_webin', 'Webin-9999', 'webin', 'user@example.com', 'user', 'user')")
-            execute_query(metadata_connection_handle, query)
+            if create_account:
+                query = (
+                    f"INSERT INTO eva_submissions.submission_account(id, user_id, login_type, primary_email, first_name, last_name) "
+                    f"VALUES('Webin-9999_webin', 'Webin-9999', 'webin', 'user@example.com', 'user', 'user')")
+                execute_query(metadata_connection_handle, query)
 
             query = (
                 f" INSERT INTO eva_submissions.submission(submission_id, status, submission_account_id, initiation_time) "

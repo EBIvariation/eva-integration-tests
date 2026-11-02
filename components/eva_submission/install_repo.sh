@@ -9,8 +9,8 @@ if [[ -n "$SOURCE_GITHUB_SHA" ]] ; then SOURCE_GITHUB_REF=$SOURCE_GITHUB_SHA ; f
 
 echo "Clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git"
 
-SOURCE_GITHUB_REPOSITORY=nitin-ebi/eva-submission
-SOURCE_GITHUB_REF=replace-eload-with-submission-id
+SOURCE_GITHUB_REPOSITORY=tcezard/eva-submission
+SOURCE_GITHUB_REF=sample_records
 
 git clone https://github.com/${SOURCE_GITHUB_REPOSITORY}.git eva-submission
 cd eva-submission
