@@ -3,16 +3,24 @@ import os
 import shutil
 from unittest import TestCase
 
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import execute_query
+
 from utils.docker_utils import build_from_docker_compose, \
-    stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose, read_file_from_container
+    stop_and_remove_all_containers_in_docker_compose, start_all_containers_in_docker_compose, read_file_from_container, \
+    read_logs_from_container
 
 
 def _dump_logs(test_instance):
     if test_instance.container_log_files:
         for container_name, log_file in test_instance.container_log_files:
             try:
-                output = read_file_from_container(container_name, log_file)
-                print('Log file: ' + log_file)
+                if log_file is None:
+                    output = read_logs_from_container(container_name)
+                    print('Docker logs from: ' + container_name)
+                else:
+                    output = read_file_from_container(container_name, log_file)
+                    print('Log file: ' + log_file)
                 print(output)
             except Exception as e:
                 print(f'Failed to read log {log_file} file from {container_name}')
@@ -119,6 +127,7 @@ class TestWithDockerCompose(TestCase):
     container_name = None
     container_ftp_submission_dir = None
     container_log_files = None
+    initialize_submission_account = False
 
     @classmethod
     def setUpClass(cls):
@@ -140,6 +149,9 @@ class TestWithDockerCompose(TestCase):
         # start containers
         start_all_containers_in_docker_compose(self.docker_compose_file)
 
+        if self.initialize_submission_account:
+            self._initialize_submission_account()
+
     def tearDown(self):
         # delete test run directory
         if self.test_run_dir and os.path.exists(self.test_run_dir):
@@ -147,3 +159,14 @@ class TestWithDockerCompose(TestCase):
 
         # stop and remove container
         stop_and_remove_all_containers_in_docker_compose(self.docker_compose_file)
+
+    def _initialize_submission_account(self):
+        """Seed the account needed by tests after submission-ws has run Flyway."""
+        query = (
+            "INSERT INTO eva_submissions.submission_account "
+            "(id, first_name, last_name, login_type, primary_email, user_id) "
+            "VALUES ('eva_webin', 'Test', 'User', 'webin', 'test@ebi.ac.uk', 'Webin-123') "
+            "ON CONFLICT DO NOTHING"
+        )
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as connection:
+            execute_query(connection, query)

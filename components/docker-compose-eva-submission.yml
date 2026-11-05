@@ -24,7 +24,7 @@ services:
       mongo_db:
         condition: service_healthy
       eva-submission-ws:
-        condition: service_started
+        condition: service_healthy
       eva-ws:
         condition: service_started
       mock-ws:

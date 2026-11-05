@@ -11,6 +11,7 @@ from utils.test_with_docker_compose import TestWithDockerCompose
 logger = log_cfg.get_logger(__name__)
 
 class TestEvaSubCli(TestWithDockerCompose):
+    initialize_submission_account = True
     root_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
     tests_directory = os.path.join(root_dir, 'tests')
     resources_directory = os.path.join(tests_directory, 'resources')
