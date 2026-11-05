@@ -28,7 +28,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
 
         # create metadata xlsx file
         shutil.copyfile(
-            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v2.0_cpombe.xlsx'),
+            os.path.join(self.resources_directory, 'metadata_files', 'EVA_Submission_v3.1.0_cpombe.xlsx'),
             self.metadata_xlsx
         )
 
@@ -152,6 +152,21 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             submission_id = config.query('submission', 'submission_id')
             assert submission_id is not None
             self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
+
+
+    def assert_samples_in_evapro_files(self, expected_samples, expected_sample_count):
+        with get_metadata_connection_handle(self.maven_profile, self.maven_settings_file) as metadata_connection_handle:
+            query = ("select distinct s.biosample_accession, fs.name_in_file from evapro.file_sample fs "
+                     "join evapro.sample s on s.sample_id = fs.sample_id "
+                     "join evapro.analysis_file af on af.file_id = fs.file_id "
+                     "where af.analysis_accession = 'ERZ28769990'")
+            results = get_all_results_for_query(metadata_connection_handle, query)
+            assert set(results) == expected_samples
+
+            query = ("select sample_count from evapro.project_samples_temp1 "
+                     "where project_accession = 'PRJEB105137'")
+            results = get_all_results_for_query(metadata_connection_handle, query)
+            assert results == [(expected_sample_count,)]
 
     def create_submission_dir_and_copy_files_to_container(self):
         # Prepare reference genome
@@ -378,7 +393,7 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             query = ("select project_accession, sample_count, pro_samp1_id from evapro.project_samples_temp1 "
                      "where project_accession = 'PRJEB105137'")
             results = get_all_results_for_query(metadata_connection_handle, query)
-            expected = [('PRJEB105137', 0, 43)]
+            expected = [('PRJEB105137', 1, 43)]
             assert set(results) == set(expected)
 
             query = ("select project_accession, taxonomy_ids from evapro.project_children_taxonomy "
@@ -407,6 +422,9 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
             expected = [(1, 'ERF219841043', '77b3f2576319887b36479474c39bf5e6', 'VCF', 50824503470),
                         (2, 'ERF219841044', 'bbca217c4ca11a8068b11fb9fb051a5e', 'CSI', 335146)]
             assert set(results) == set(expected)
+
+        # The sample in the VCF is linked to the VCF file using the sample records
+        self.assert_samples_in_evapro_files({('SAMD00045866', 'S1')}, expected_sample_count=1)
 
     def assert_data_loaded_to_mongodb(self):
         with get_mongo_connection_handle(self.maven_profile, self.maven_settings_file) as mongo_conn:
