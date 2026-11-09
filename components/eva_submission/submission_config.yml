@@ -2,9 +2,12 @@ ftp_dir: /opt/ftp/private/
 public_ftp_dir: /opt/ftp/public/
 
 eloads_dir: /opt/submissions/
+submissions_dir: /opt/submissions/
 nobackup_eloads_dir: /opt/no_backup/submissions/
+nobackup_submissions_dir: /opt/no_backup/submissions
 
 eloads_lts_dir: ''
+submissions_lts_dir: ''
 
 eutils_api_key: ''
 
