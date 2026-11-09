@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 WORKDIR /app
 
 # Clone the source code
-RUN git clone https://github.com/EBIvariation/eva-submission-ws.git .
+# TODO revert before merge
+RUN git clone --branch EVA-4264 https://github.com/apriltuesday/eva-submission-ws.git .
 
 # Copy pom.xml first to leverage Docker layer caching for dependencies
 RUN mvn dependency:go-offline -B

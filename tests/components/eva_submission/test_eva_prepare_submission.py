@@ -6,20 +6,13 @@ from ebi_eva_common_pyutils.config import Configuration
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import execute_query, get_all_results_for_query
 
+from tests.components.eva_submission.test_eva_submission import TestEvaSubmission
 from utils.docker_utils import copy_files_to_container, run_docker_cmd, copy_files_from_container
 from utils.test_utils import run_quiet_command
-from utils.test_with_docker_compose import TestWithDockerCompose, log_on_failure
+from utils.test_with_docker_compose import log_on_failure
 
 
-class TestEvaSubmissionPreparation(TestWithDockerCompose):
-    maven_settings_file = os.path.join(TestWithDockerCompose.root_dir, 'components', 'maven-settings.xml')
-    maven_profile = 'localhost'
-    test_run_dir = os.path.join(TestWithDockerCompose.tests_directory, 'eva_submission_test_run')
-
-    docker_compose_file = os.path.join(TestWithDockerCompose.root_dir, 'components',
-                                       'docker-compose-eva-submission.yml')
-    container_name = 'eva_submission_test'
-
+class TestEvaSubmissionPreparation(TestEvaSubmission):
     submission_account_id = "test_submission_account"
     submission_id = "test_submission_id"
     container_ftp_submission_dir = '/opt/ftp/private/eva-box-01/upload/username'
@@ -28,7 +21,10 @@ class TestEvaSubmissionPreparation(TestWithDockerCompose):
 
     def setUp(self):
         super().setUp()
-        self.container_log_files = []
+        self.container_log_files = [
+            # Capture logs from stdout
+            ('eva_submission_ws_test', None)
+        ]
         self.eload_number = 1
 
     @log_on_failure
