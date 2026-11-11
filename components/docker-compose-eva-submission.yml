@@ -154,6 +154,18 @@ services:
     networks:
       - eva_network
 
+  mock-globus:
+    image: mock_globus_test
+    build:
+      context: ./mock_globus
+      dockerfile: Dockerfile
+    container_name: mock_globus_test
+    restart: always
+    ports:
+      - 5000:5000
+    networks:
+      - eva_network
+
 networks:
   eva_network:
     name: eva_network
