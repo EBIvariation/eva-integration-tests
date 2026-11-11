@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Clone the source code
 # TODO revert before merge
-RUN git clone --branch EVA-4264 https://github.com/apriltuesday/eva-submission-ws.git .
+RUN git clone --branch store-processing-state https://github.com/nitin-ebi/eva-submission-ws.git .
 
 # Copy pom.xml first to leverage Docker layer caching for dependencies
 RUN mvn dependency:go-offline -B

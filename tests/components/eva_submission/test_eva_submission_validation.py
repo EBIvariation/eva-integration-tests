@@ -63,6 +63,10 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'SUCCESS')
 
+        # the processing state is stored in the database as well as in the config
+        self.assert_preparation_state_stored_in_db(submission_id, config)
+        self.assert_validation_state_stored_in_db(submission_id, config)
+
     @log_on_failure
     def test_validation_with_tasks(self):
         prepare_cmd = (
@@ -207,6 +211,11 @@ class TestEvaSubmissionValidation(TestEvaSubmission):
         self.assert_validation_pass_in_config(submission_config_file)
         self.assert_directory_structure(os.path.join(self.test_run_dir, f'{submission_id}'))
         self.assert_submission_processing_status_updated(submission_id, 'VALIDATION', 'SUCCESS')
+
+        # the processing state is stored in the database as well as in the config
+        config = Configuration(submission_config_file)
+        self.assert_preparation_state_stored_in_db(submission_id, config)
+        self.assert_validation_state_stored_in_db(submission_id, config)
 
     def create_submission_dir_and_copy_files_to_container(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
