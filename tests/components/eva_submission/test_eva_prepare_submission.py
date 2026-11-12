@@ -65,6 +65,9 @@ class TestEvaSubmissionPreparation(TestEvaSubmission):
             assert len(results) == 1
             assert results[0][0] == submission_id
 
+        # the processing state is stored in the database as well as in the config
+        self.assert_preparation_state_stored_in_db(submission_id, config)
+
     @log_on_failure
     def test_prepare_submission_metadata_json_from_webservice(self):
         # copy all required file into container
@@ -93,6 +96,8 @@ class TestEvaSubmissionPreparation(TestEvaSubmission):
             assert results[0][0] == self.submission_id
             assert results[0][1] == self.eload_number
             assert results[0][2] == "eva-sub-cli"
+        # the processing state is stored in the database as well as in the config
+        self.assert_preparation_state_stored_in_db(self.submission_id, config)   # json-from-webservice test
 
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')

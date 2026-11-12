@@ -43,6 +43,8 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         # copy all required file into container
         self.create_submission_dir_and_copy_files_to_container()
 
+    # The state needed by the ingestion is only in the config, as for the submissions processed before the state
+    # was stored in the database: the ingestion falls back on the config.
     @log_on_failure
     def test_ingestion_archive_only(self):
         submission_id = f'ELOAD_{self.eload_number}'
@@ -71,6 +73,63 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         local_log_file = os.path.join(self.test_run_dir, f'{submission_id}', f'ingestion.out')
         assert all(d.startswith(f'/opt/no_backup/submissions/{submission_id}/nextflow_output_')
                    for d in extract_nextflow_work_dirs_from_log(local_log_file))
+
+
+    @log_on_failure
+    def test_ingestion_archive_only_with_state_from_database(self):
+        # The project accession, analysis accessions, aggregation type and taxonomy are only in the database:
+        # the ingestion reads them from there.
+        submission_id = f'ELOAD_{self.eload_number}'
+        self.put_submission_in_db(submission_id, self.eload_number)
+        analysis_alias = f'ELOAD_{self.eload_number}_AA'
+
+        # Move the state from the config to the database
+        config_file = os.path.join(self.test_run_dir, f'.ELOAD_{self.eload_number}_config.yml')
+        with open(config_file) as open_file:
+            config_content = yaml.safe_load(open_file)
+        project_accession = config_content['brokering']['ena'].pop('PROJECT')
+        analysis_accession = config_content['brokering']['ena'].pop('ANALYSIS')[analysis_alias]
+        aggregation_check = config_content['validation'].pop('aggregation_check')
+        aggregation_type = aggregation_check['analyses'][analysis_alias]
+        taxonomy_id = config_content['submission'].pop('taxonomy_id')
+        assembly_accession = config_content['submission']['analyses'][analysis_alias]['assembly_accession']
+        with open(config_file, 'w') as open_file:
+            yaml.safe_dump(config_content, open_file)
+        copy_files_to_container(self.container_name, os.path.join(self.container_submission_dir, submission_id),
+                                config_file)
+        self.seed_tracking_details_in_db(
+            submission_id, project_accession, str(taxonomy_id),
+            [{'alias': analysis_alias, 'accession': analysis_accession, 'aggregation': aggregation_type,
+              'assembly': assembly_accession}]
+        )
+
+        log_file = f'{self.container_submission_dir}/{submission_id}/ingestion.out'
+        self.container_log_files.append((self.container_name, log_file))
+        ingestion_cmd = (
+            f"docker exec {self.container_name} sh -c 'ingest_submission.py --submission_id {submission_id} --tasks archive_only > {log_file} 2>&1'"
+        )
+        # Run ingestion from command line
+        run_quiet_command("run eva_submission ingest_submission script for archive_only", ingestion_cmd)
+
+        # copy ingestion output from docker
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+
+        # assert results: the same as when the state is read from the config
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
+
+        # The assertions read the accessions from the config: put back what was moved to the database for this test
+        with open(submission_config_file) as open_file:
+            config_after_ingestion = yaml.safe_load(open_file)
+        ena_section = config_after_ingestion.setdefault('brokering', {}).setdefault('ena', {})
+        ena_section['PROJECT'] = project_accession
+        ena_section['ANALYSIS'] = {analysis_alias: analysis_accession}
+        config_after_ingestion.setdefault('validation', {})['aggregation_check'] = aggregation_check
+        config_after_ingestion.setdefault('submission', {})['taxonomy_id'] = taxonomy_id
+        with open(submission_config_file, 'w') as open_file:
+            yaml.safe_dump(config_after_ingestion, open_file)
+
+        self.assert_ingestion_archive_only(submission_config_file)
+
 
     @log_on_failure
     def test_ingestion_variant_load_idempotent(self):
