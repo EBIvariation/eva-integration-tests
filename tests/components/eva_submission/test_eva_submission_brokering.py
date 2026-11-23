@@ -68,6 +68,8 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         )
         # Run validation from command line
         run_quiet_command("run eva_submission validate_submission script", validation_cmd)
+        # The brokering only starts if the submission-ws says that the validation was successful
+        assert self.get_processing_state_from_ws(submission_id) == ('VALIDATION', 'SUCCESS')
 
         log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
@@ -89,12 +91,16 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
+        assert self.get_processing_state_from_ws(submission_id) == ('BROKERING', 'SUCCESS')
         self.assert_submission_details_updated(submission_id)
 
     @log_on_failure
     def test_submission_with_old_metadata_spreadsheet(self):
         submission_id = f'ELOAD_{self.eload_number2}'
         self.put_submission_in_db(submission_id, self.eload_number2)
+        # Validated before the processing state was stored in the database: the submission-ws has no processing
+        # state and the brokering falls back on the validation results in the config
+        assert self.get_processing_state_from_ws(submission_id) == (None, None)
 
         log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
         self.container_log_files.append((self.container_name, log_file))
@@ -110,6 +116,33 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         # assert results
         self.assert_brokering_pass_in_config(
             os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml'))
+        self.assert_submission_processing_status_updated(submission_id, 'BROKERING', 'SUCCESS')
+
+    @log_on_failure
+    def test_brokering_refused_when_validation_failed_in_database(self):
+        # The config says the validation passed but the submission-ws knows that it failed: the database wins
+        submission_id = f'ELOAD_{self.eload_number2}'
+        self.put_submission_in_db(submission_id, self.eload_number2)
+        self.set_processing_status_in_ws(submission_id, 'VALIDATION', 'FAILURE')
+        assert self.get_processing_state_from_ws(submission_id) == ('VALIDATION', 'FAILURE')
+
+        log_file = f'{self.container_submission_dir}/{submission_id}/broker.out'
+        self.container_log_files.append((self.container_name, log_file))
+        brokering_cmd = (
+            f"docker exec {self.container_name} sh -c 'broker_submission.py --use_legacy_upload --debug --submission_id {submission_id} > {log_file} 2>&1'"
+        )
+        result = subprocess.run(brokering_cmd, shell=True, capture_output=True, text=True)
+        assert result.returncode != 0, 'The brokering should not run when the validation has failed'
+
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+        with open(os.path.join(self.test_run_dir, f'{submission_id}', 'broker.out')) as open_file:
+            assert 'Validation has not completed successfully' in open_file.read()
+
+        # Nothing was brokered and the processing state was left untouched
+        config = Configuration(os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml'))
+        assert config.query('brokering', 'ena', 'PROJECT') is None
+        assert config.query('brokering', 'Biosamples', 'pass') is None
+        assert self.get_processing_state_from_ws(submission_id) == ('VALIDATION', 'FAILURE')
 
     @log_on_failure
     def test_submission_with_existing_project(self):
@@ -347,6 +380,7 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         self.assert_preparation_state_stored_in_db(submission_id, config)
         self.assert_validation_state_stored_in_db(submission_id, config)
         self.assert_brokering_state_stored_in_db(submission_id, config)
+        self.assert_release_date_stored_in_db(submission_id, config)
 
     @staticmethod
     def get_sample_records(eload_config_yml):

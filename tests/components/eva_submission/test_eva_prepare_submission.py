@@ -99,6 +99,53 @@ class TestEvaSubmissionPreparation(TestEvaSubmission):
         # the processing state is stored in the database as well as in the config
         self.assert_preparation_state_stored_in_db(self.submission_id, config)
 
+    @log_on_failure
+    def test_prepare_submission_again_backs_up_and_resets_state_in_database(self):
+        self.setup_test_data_for_metadata_json_from_webservice()
+        log_file = f'{self.container_submission_dir}/prepare.out'
+        self.container_log_files.append((self.container_name, log_file))
+        prepare_cmd = (
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submission_id {self.submission_id} "
+            f"--eload {self.eload_number} --force_cli > {log_file} 2>&1'"
+        )
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+        first_state = self.get_tracking_details_from_db(self.submission_id)
+        assert first_state is not None
+        assert first_state['project_accession'] is None
+        first_analyses = self.get_submitted_analyses_from_db(self.submission_id)
+        assert first_analyses
+
+        # State that the preparation does not produce, as left by an earlier processing of the submission
+        self.call_submission_ws_from_container('PUT', self.submission_id, {'projectAccession': 'PRJEB00001'})
+        assert self.get_tracking_details_from_db(self.submission_id)['project_accession'] == 'PRJEB00001'
+
+        # Preparing again resets the config: the tracking details are backed up in the submission directory and
+        # deleted from the database before the new state is stored.
+        run_quiet_command("run eva_submission prepare_submission script again", prepare_cmd)
+
+        backup = self.read_tracking_details_backup(self.submission_id)
+        assert backup['projectAccession'] == 'PRJEB00001'
+        assert {a['analysisAlias'] for a in backup['analyses']} == set(first_analyses)
+
+        copy_files_from_container(self.container_name, self.container_submission_dir, self.test_run_dir)
+        submission_config_yml = os.path.join(self.test_run_dir, f'{self.submission_id}',
+                                             f'.{self.submission_id}_config.yml')
+        config = Configuration(submission_config_yml)
+        self.assert_preparation_state_stored_in_db(self.submission_id, config)
+        assert self.get_tracking_details_from_db(self.submission_id)['project_accession'] is None
+
+    @log_on_failure
+    def test_prepare_submission_first_time_has_nothing_to_back_up(self):
+        self.setup_test_data_for_metadata_json_from_webservice()
+        prepare_cmd = (
+            f"docker exec {self.container_name} sh -c 'prepare_submission.py --submission_id {self.submission_id} "
+            f"--eload {self.eload_number}'"
+        )
+        run_quiet_command("run eva_submission prepare_submission script", prepare_cmd)
+        backup_file = os.path.join(self.container_submission_dir, self.submission_id, 'tracking_details_backup')
+        run_docker_cmd("Check that no backup of the tracking details was made",
+                       f"docker exec {self.container_name} sh -c '! test -e {backup_file}'")
+
     def setup_test_data_for_metadata_spreadsheet(self):
         vcf_file = os.path.join(self.vcf_files_dir, 'vcf_file_ASM294v2.vcf')
         run_docker_cmd(f"Create submission directory in container",
