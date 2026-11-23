@@ -103,7 +103,7 @@ GRANT ALL ON TABLE evapro.eva_submission_status_cv TO metadata_db_user;
 
 --- table (eva_submission)
 CREATE TABLE evapro.eva_submission (
-	eva_submission_id serial4 NOT NULL,
+	eva_submission_id varchar(36) NOT NULL,
 	eva_submission_status_id int4 NOT NULL,
 	hold_date date NULL,
 	CONSTRAINT eva_submission_pkey PRIMARY KEY (eva_submission_id)
@@ -118,8 +118,8 @@ ALTER TABLE evapro.eva_submission ADD CONSTRAINT fk_evasubmission_eva_submission
 --- table (project_eva_submission)
 CREATE TABLE evapro.project_eva_submission (
 	project_accession varchar(25) NOT NULL,
-	old_ticket_id int4 NOT NULL,
-	eload_id int4 NULL,
+	old_ticket_id varchar(36) NOT NULL,
+	submission_id varchar(36) NULL,
 	old_eva_submission_id int4 NULL,
 	CONSTRAINT project_eva_submission_pkey PRIMARY KEY (project_accession, old_ticket_id)
 );
@@ -538,7 +538,7 @@ AS SELECT y.project_accession,
                             cp1.child AS child_2,
                             cp1.child_tax_id AS tax_id_child2
                            FROM evapro.eva_submission
-                             LEFT JOIN evapro.project_eva_submission ps(project_accession, eva_submission_id, eload_id, old_eva_submission_id) USING (eva_submission_id)
+                             LEFT JOIN evapro.project_eva_submission ps ON ps.submission_id = evapro.eva_submission.eva_submission_id
                              LEFT JOIN evapro.project_taxonomy pt USING (project_accession)
                              LEFT JOIN ( SELECT p.project_accession,
                                     p.type,
@@ -789,7 +789,7 @@ AS SELECT DISTINCT evapro.project.project_accession,
      LEFT JOIN evapro.project_counts USING (project_accession)
      LEFT JOIN evapro.project_children_taxonomy USING (project_accession)
      LEFT JOIN evapro.project_samples_temp1 USING (project_accession)
-     LEFT JOIN evapro.project_eva_submission project_eva_submission(project_accession, eva_submission_id, eload_id, old_eva_submission_id) USING (project_accession)
+     LEFT JOIN evapro.project_eva_submission USING (project_accession)
      LEFT JOIN evapro.project_experiment USING (project_accession)
      LEFT JOIN ( SELECT evapro.project_publication.project_accession,
             string_agg(evapro.project_publication.db::text||':'||evapro.project_publication.id::text, ', '::text) AS ids
@@ -807,7 +807,7 @@ AS SELECT DISTINCT evapro.project.project_accession,
             string_agg(evapro.project_platform.platform::text, ', '::text) AS platform
            FROM evapro.project_platform
           GROUP BY evapro.project_platform.project_accession) d(project_accession_1, platform) ON d.project_accession_1::text = project.project_accession::text
-     JOIN evapro.eva_submission USING (eva_submission_id)
+     JOIN evapro.eva_submission ON evapro.eva_submission.eva_submission_id = evapro.project_eva_submission.submission_id
      LEFT JOIN evapro.project_resource r USING (project_accession)
      LEFT JOIN ( SELECT evapro.browsable_file.project_accession,
             bool_or(evapro.browsable_file.loaded) AS browsable

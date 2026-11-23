@@ -24,7 +24,7 @@ services:
       mongo_db:
         condition: service_healthy
       eva-submission-ws:
-        condition: service_started
+        condition: service_healthy
       eva-ws:
         condition: service_started
       mock-ws:
@@ -151,6 +151,18 @@ services:
     restart: always
     ports:
       - 8082:8080
+    networks:
+      - eva_network
+
+  mock-globus:
+    image: mock_globus_test
+    build:
+      context: ./mock_globus
+      dockerfile: Dockerfile
+    container_name: mock_globus_test
+    restart: always
+    ports:
+      - 5000:5000
     networks:
       - eva_network
 
