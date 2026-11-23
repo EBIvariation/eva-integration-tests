@@ -102,12 +102,12 @@ class TestEvaSubCliToEvaSubmission(TestEvaSubCli):
         # Prepare_submission also checks the uploaded file md5 against the one in the metadata json
 
         # The VCF file is assembled from its parts, and the parts are not copied
-        vcf_dir = os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}', '10_submitted', 'vcf_files')
+        vcf_dir = os.path.join(self.container_eload_dir, f'{submission_id}', '10_submitted', 'vcf_files')
         assert run_command_in_container(self.eva_submission_container_name, f'ls {vcf_dir}').split() == [large_file_name]
 
         eload_config = yaml.safe_load(read_file_from_container(
             self.eva_submission_container_name,
-            os.path.join(self.container_eload_dir, f'ELOAD_{self.eload_number}', f'.ELOAD_{self.eload_number}_config.yml')
+            os.path.join(self.container_eload_dir, f'{submission_id}', f'.{submission_id}_config.yml')
         ))
         assert eload_config['submission']['submission_id'] == submission_id
 

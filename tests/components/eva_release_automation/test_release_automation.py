@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 import tempfile
@@ -182,7 +183,12 @@ class TestRunReleaseForSpecies(TestWithDockerCompose):
         with tempfile.TemporaryDirectory() as tmp_dir:
             for filename in release_filenames:
                 local_file = os.path.join(tmp_dir, filename)
-                open(local_file, 'w').close()
+                if filename.endswith(('.vcf.gz', '.txt.gz')):
+                    # Needs at least one non-header line, otherwise publishing is skipped as "empty"
+                    with gzip.open(local_file, 'wt') as f:
+                        f.write('##fileformat=VCFv4.2\n#CHROM\tPOS\nrs1\t1\n')
+                else:
+                    open(local_file, 'w').close()
                 copy_files_to_container(self.container_name, container_v1_dir, local_file)
 
         # Insert release v2 tracking row with should_be_released=False

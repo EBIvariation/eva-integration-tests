@@ -341,24 +341,12 @@ class TestEvaSubmissionBrokering(TestEvaSubmission):
         assert config.query('brokering', 'ena', 'PROJECT', ret_default='').startswith('PRJE')
 
     def assert_submission_details_updated(self, submission_id):
-        metadata_connection_handle = get_metadata_connection_handle(self.maven_profile, self.maven_settings_file)
-        with metadata_connection_handle:
-            submission_details_query = (f"SELECT release_date, project_accession "
-                                        f"FROM eva_submissions.submission_tracking_details "
-                                        f"where submission_id = '{submission_id}'")
-            results = get_all_results_for_query(metadata_connection_handle, submission_details_query)
-            assert len(results) == 1
-            release_date, project_accession = results[0]
-            assert release_date is not None
-            assert project_accession is not None and project_accession.startswith('PRJE')
-
-            analysis_accessions_query = (f"SELECT analysis_accessions "
-                                        f"FROM eva_submissions.submission_tracking_details_analysis_accessions "
-                                        f"where submission_id = '{submission_id}'")
-            results = get_all_results_for_query(metadata_connection_handle, analysis_accessions_query)
-            assert len(results) > 0
-            analysis_accessions = [r[0] for r in results]
-            assert analysis_accessions[0].startswith('ERZ')
+        """The state written to the config by preparation, validation and brokering is also in the database."""
+        submission_config_file = os.path.join(self.test_run_dir, f'{submission_id}', f'.{submission_id}_config.yml')
+        config = Configuration(submission_config_file)
+        self.assert_preparation_state_stored_in_db(submission_id, config)
+        self.assert_validation_state_stored_in_db(submission_id, config)
+        self.assert_brokering_state_stored_in_db(submission_id, config)
 
     @staticmethod
     def get_sample_records(eload_config_yml):
