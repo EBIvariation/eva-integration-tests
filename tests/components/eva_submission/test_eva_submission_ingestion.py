@@ -165,6 +165,8 @@ class TestEvaSubmissionIngestion(TestEvaSubmission):
         submission_id = config.query('submission', 'submission_id')
         assert submission_id is not None
         self.assert_submission_processing_status_updated(submission_id, 'INGESTION', 'FAILURE')
+        # The accession task refreshes the hold date from ENA: it is also stored as release date in the database
+        self.assert_release_date_stored_in_db(submission_id, config)
 
         # Check that nextflow wrote to nobackup output
         local_log_file = os.path.join(self.test_run_dir, f'{submission_id}', os.path.basename(log_file1))

@@ -7,6 +7,9 @@ from ebi_eva_common_pyutils.logger import logging_config as log_cfg
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 
+import yaml
+
+from utils.docker_utils import read_file_from_container
 from utils.test_with_docker_compose import TestWithDockerCompose
 
 logger = log_cfg.get_logger(__name__)
@@ -243,3 +246,52 @@ class TestEvaSubmission(TestWithDockerCompose):
         assert result.returncode == 0, f'{method} trackingDetails failed: {result.stdout} {result.stderr}'
         status_code, _, response_text = result.stdout.partition('\n')
         return json.loads(response_text) if response_text.strip() else None
+
+    def call_submission_ws_admin_from_container(self, method, *path_parts, body=None):
+        """
+        Call an admin endpoint of eva-submission-ws from the eva_submission container, like the scripts do.
+        Returns the status code and the json response, None if the response is empty (e.g. 204).
+        """
+        script = (
+            "import requests, yaml\n"
+            "ws = yaml.safe_load(open('/root/.submission_config.yml'))['submissions']['webservice']\n"
+            f"url = '/'.join([ws['url'], 'admin'] + {list(path_parts)!r})\n"
+            f"response = requests.request('{method}', url, json={body!r}, "
+            "auth=(ws['admin_username'], ws['admin_password']))\n"
+            "print(response.status_code)\n"
+            "print(response.text)\n"
+            "response.raise_for_status()\n"
+        )
+        result = subprocess.run(['docker', 'exec', self.container_name, 'python', '-c', script],
+                                capture_output=True, text=True)
+        logger.info(f'{method} {path_parts}: {result.stdout} {result.stderr}')
+        assert result.returncode == 0, f'{method} {path_parts} failed: {result.stdout} {result.stderr}'
+        status_code, _, response_text = result.stdout.partition('\n')
+        return int(status_code), (json.loads(response_text) if response_text.strip() else None)
+
+    def set_processing_status_in_ws(self, submission_id, step, status):
+        """Set the processing step and status of the submission, as the processing scripts do."""
+        self.call_submission_ws_admin_from_container('PUT', 'submission-process', submission_id, step, status)
+
+    def get_processing_state_from_ws(self, submission_id):
+        """The (step, status) of the submission as read by the processing scripts: (None, None) if there is none."""
+        status_code, state = self.call_submission_ws_admin_from_container('GET', 'submission-process', submission_id)
+        if status_code == 204 or not state:
+            return None, None
+        return state.get('step'), state.get('status')
+
+    def read_tracking_details_backup(self, submission_id):
+        """The tracking details saved in the submission directory before they were deleted by a new preparation."""
+        content = read_file_from_container(
+            self.container_name, os.path.join(self.container_submission_dir, submission_id, 'tracking_details_backup'))
+        return yaml.safe_load(content)
+
+    def assert_release_date_stored_in_db(self, submission_id, config):
+        """The hold date written to the config is also the release date stored in the database."""
+        hold_date = config.query('brokering', 'ena', 'hold_date')
+        assert hold_date, 'The hold date should have been stored in the config'
+        tracking_details = self.get_tracking_details_from_db(submission_id)
+        assert tracking_details is not None, f'No tracking details stored for {submission_id}'
+        assert tracking_details['release_date'] is not None
+        assert str(tracking_details['release_date'])[:10] == str(hold_date)[:10]
+
